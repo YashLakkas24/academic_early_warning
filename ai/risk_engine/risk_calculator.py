@@ -1,4 +1,5 @@
 from trend import calculate_trend
+from risk_factors import get_risk_factors
 
 
 def calculate_risk(student):
@@ -31,8 +32,11 @@ def calculate_risk(student):
     else:
         risk_level = "HIGH"
 
+    risk_factors = get_risk_factors(student, trend)
+
     return {
         "risk_score": round(risk_score, 2),
         "risk_level": risk_level,
         "trend": trend,
+        "risk_factors": risk_factors,
     }
