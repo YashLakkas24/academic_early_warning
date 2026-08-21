@@ -1,11 +1,13 @@
-from trend import calculate_trend
-from risk_factors import get_risk_factors
+from .trend import calculate_trend
+from .risk_factors import get_risk_factors
 
 
 def calculate_risk(student):
     attendance_risk = 100 - student["attendance"]
     internal_risk = 100 - student["internal_marks"]
     assignment_risk = 100 - student["assignment_score"]
+    previous_sem_risk = (10 - student["previous_sem_cgpa"]) * 10
+    practical_risk = 100 - student["practical_marks"]
 
     test_scores = [student["test_1"], student["test_2"], student["test_3"]]
 
@@ -14,14 +16,16 @@ def calculate_risk(student):
     if trend == "DECLINING":
         trend_risk = 100
     elif trend == "STABLE":
-        trend_risk = 400
+        trend_risk = 50
     else:
         trend_risk = 0
 
     risk_score = (
-        attendance_risk * 0.30
-        + internal_risk * 0.30
-        + assignment_risk * 0.20
+        attendance_risk * 0.25
+        + internal_risk * 0.20
+        + assignment_risk * 0.15
+        + practical_risk * 0.10
+        + previous_sem_risk * 0.10
         + trend_risk * 0.20
     )
 
@@ -39,4 +43,6 @@ def calculate_risk(student):
         "risk_level": risk_level,
         "trend": trend,
         "risk_factors": risk_factors,
+        "hackathon_count": student["hackathon_count"],
+        "extracurricular_count": student["extracurricular_count"],
     }

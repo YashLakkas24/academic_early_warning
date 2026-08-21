@@ -9,6 +9,10 @@ REQUIRED_COLUMNS = [
     "test_1",
     "test_2",
     "test_3",
+    "practical_marks",
+    "previous_sem_cgpa",
+    "hackathon_count",
+    "extracurricular_count",
 ]
 
 
@@ -29,11 +33,21 @@ def validate_ranges(df):
         "test_1",
         "test_2",
         "test_3",
+        "practical_marks",
     ]
 
     for column in score_columns:
         if not df[column].between(0, 100).all():
             raise ValueError(f"Invalid values in {column}")
+
+    if not df["previous_sem_cgpa"].between(0, 10).all():
+        raise ValueError("Invalid values in previous_sem_cgpa")
+
+    if (df["hackathon_count"] < 0).any():
+        raise ValueError("Invalid values in hackathon_count")
+
+    if (df["extracurricular_count"] < 0).any():
+        raise ValueError("Invalid values in extracurricular_count")
 
 
 def validate_data(df):
