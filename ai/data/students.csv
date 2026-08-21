@@ -1,0 +1,11 @@
+student_id,name,attendance,internal_marks,assignment_score,test_1,test_2,test_3
+ST001,Rahul,92,85,90,82,86,89
+ST002,Amit,61,48,52,72,63,51
+ST003,Priya,88,79,84,80,78,82
+ST004,Neha,74,65,70,68,69,70
+ST005,Arjun,45,42,38,62,51,39
+ST006,Sneha,96,91,94,88,92,95
+ST007,Karan,68,55,61,81,72,62
+ST008,Ananya,82,72,76,65,74,81
+ST009,Rohan,58,76,81,85,82,79
+ST010,Isha,90,62,88,55,67,76
