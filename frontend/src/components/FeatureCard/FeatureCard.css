@@ -1,0 +1,95 @@
+.feature-card {
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-large);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--transition-normal), border-color var(--transition-normal),
+    background var(--transition-normal);
+}
+
+.feature-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-hover);
+}
+
+.feature-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.feature-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-small);
+  background: var(--color-primary-dim);
+  color: var(--color-primary-light);
+}
+
+.feature-card--secondary .feature-card__icon {
+  background: var(--color-secondary-dim);
+  color: var(--color-secondary);
+}
+
+.feature-card__index {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  letter-spacing: 0.05em;
+}
+
+.feature-card__title {
+  font-size: 18px;
+  color: var(--color-text-primary);
+  margin-bottom: 8px;
+}
+
+.feature-card__desc {
+  font-size: 14.5px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  flex-grow: 1;
+}
+
+.feature-card__visual {
+  margin-top: 20px;
+}
+
+/* ---------- Size variants (bento hierarchy) ---------- */
+.feature-card--hero {
+  grid-column: span 4;
+  padding: 34px;
+}
+
+.feature-card--hero .feature-card__icon {
+  width: 48px;
+  height: 48px;
+}
+
+.feature-card--hero .feature-card__title {
+  font-size: 23px;
+}
+
+.feature-card--wide {
+  grid-column: span 3;
+}
+
+.feature-card--default {
+  grid-column: span 2;
+}
+
+@media (max-width: 980px) {
+  .feature-card--hero,
+  .feature-card--wide,
+  .feature-card--default {
+    grid-column: span 1;
+  }
+}
