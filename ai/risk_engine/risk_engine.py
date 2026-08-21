@@ -1,7 +1,7 @@
 import pandas as pd
 
-from validator import validate_data
-from risk_calculator import calculate_risk
+from .validator import validate_data
+from .risk_calculator import calculate_risk
 
 
 def analyze_student(student):
