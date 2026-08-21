@@ -1,0 +1,66 @@
+.signal-thread {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.signal-thread__node {
+  fill: var(--color-text-muted);
+  transition: fill var(--transition-normal);
+}
+
+.signal-thread--scattered .signal-thread__node {
+  fill: var(--color-danger);
+  opacity: 0.75;
+}
+
+.signal-thread--connecting .signal-thread__node {
+  fill: var(--color-primary-light);
+}
+
+.signal-thread--resolved .signal-thread__node {
+  fill: var(--color-primary-light);
+}
+
+.signal-thread--resolved .signal-thread__node:last-child {
+  fill: var(--color-warning);
+}
+
+.signal-thread__path {
+  stroke: var(--color-border-strong);
+}
+
+.signal-thread--connecting .signal-thread__path {
+  stroke: var(--color-primary);
+  stroke-dasharray: 6 5;
+}
+
+.signal-thread--resolved .signal-thread__path {
+  stroke: var(--color-primary);
+}
+
+.signal-thread__pulse {
+  fill: none;
+  stroke: var(--color-warning);
+  stroke-width: 1.5;
+  opacity: 0;
+  animation: thread-pulse 2.4s ease-out infinite;
+}
+
+@keyframes thread-pulse {
+  0% {
+    opacity: 0.55;
+    r: 5;
+  }
+  100% {
+    opacity: 0;
+    r: 14;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signal-thread__pulse {
+    animation: none;
+    opacity: 0;
+  }
+}

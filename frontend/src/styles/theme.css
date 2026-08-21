@@ -1,0 +1,79 @@
+/*
+  THEME.CSS
+  ---------
+  This is the single source of truth for color, spacing, radius, shadow and
+  motion across the entire product (Landing, Login, and every future
+  dashboard). Pages and components should reference these variables instead
+  of hard-coding colors, so that when Teacher/Student/Parent dashboards are
+  built later, they automatically look like the same product.
+*/
+
+:root {
+  /* ---------- Backgrounds ---------- */
+  --color-bg-primary: #0a0e1a;      /* deep navy / midnight — page background */
+  --color-bg-secondary: #0d1220;    /* slightly lighter blue-black — section alternation */
+  --color-surface: #131a2b;         /* cards, panels */
+  --color-surface-hover: #1a2236;   /* hovered cards, inputs on focus */
+  --color-surface-raised: #171f33;  /* elevated surfaces, e.g. the hero product card */
+
+  /* ---------- Accents ---------- */
+  --color-primary: #4c8dff;         /* electric/soft blue — primary actions, links */
+  --color-primary-light: #7bb0ff;   /* hover/lighter variant */
+  --color-primary-dim: rgba(76, 141, 255, 0.14);
+  --color-secondary: #8a7cf2;       /* subtle violet/indigo — secondary accent */
+  --color-secondary-dim: rgba(138, 124, 242, 0.14);
+
+  /* ---------- Status ---------- */
+  --color-success: #34c77b;
+  --color-success-dim: rgba(52, 199, 123, 0.14);
+  --color-warning: #f0a93e;
+  --color-warning-dim: rgba(240, 169, 62, 0.14);
+  --color-danger: #e5605a;
+  --color-danger-dim: rgba(229, 96, 90, 0.14);
+
+  /* ---------- Text ---------- */
+  --color-text-primary: #f2f4f8;    /* near-white */
+  --color-text-secondary: #9aa5bc;  /* muted blue-gray */
+  --color-text-muted: #5f6b82;      /* faint labels, captions */
+
+  /* ---------- Borders ---------- */
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.14);
+
+  /* ---------- Radius ---------- */
+  --radius-small: 8px;
+  --radius-medium: 14px;
+  --radius-large: 22px;
+  --radius-full: 999px;
+
+  /* ---------- Shadow ---------- */
+  --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.35);
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 12px 40px rgba(0, 0, 0, 0.4);
+  --shadow-glow-primary: 0 0 0 1px rgba(76, 141, 255, 0.25), 0 0 40px rgba(76, 141, 255, 0.12);
+
+  /* ---------- Motion ---------- */
+  --transition-fast: 150ms ease;
+  --transition-normal: 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  --transition-slow: 600ms cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* ---------- Typography ---------- */
+  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* ---------- Layout ---------- */
+  --max-width: 1240px;
+  --nav-height: 76px;
+}
+
+/* Respect users who prefer reduced motion, globally */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
