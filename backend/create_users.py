@@ -24,8 +24,13 @@ students = [
     ("STU009", "Om More", "student009"),
     ("STU010", "Kavya Nair", "student010"),
 ]
-
-
+teachers = [
+    ("TCH001", "Prof. Sharma", "teacher001"),
+    ("TCH002", "Prof. Patil", "teacher002"),
+    ("TCH003", "Prof. Kulkarni", "teacher003"),
+    ("TCH004", "Prof. Joshi", "teacher004"),
+    ("TCH005", "Prof. Deshmukh", "teacher005"),
+]
 def create_users():
 
     print("Creating users...")
@@ -34,6 +39,7 @@ def create_users():
 
     try:
 
+        # Create students
         for user_id, name, password in students:
 
             existing_user = (
@@ -55,25 +61,50 @@ def create_users():
 
             db.add(student)
 
-            print(f"Created {user_id}")
+            print(f"Created student {user_id}")
+
+        # Create teachers
+        for user_id, name, password in teachers:
+
+            existing_user = (
+                db.query(User)
+                .filter(User.user_id == user_id)
+                .first()
+            )
+
+            if existing_user:
+                print(f"{user_id} already exists. Skipping.")
+                continue
+
+            teacher = User(
+                user_id=user_id,
+                full_name=name,
+                password_hash=password_hash.hash(password),
+                role="teacher"
+            )
+
+            db.add(teacher)
+
+            print(f"Created teacher {user_id}")
 
         db.commit()
 
-        print("ALL 10 STUDENTS CREATED SUCCESSFULLY!")
+        print("ALL STUDENTS AND TEACHERS CREATED SUCCESSFULLY!")
 
     except Exception as e:
 
         db.rollback()
-
         print("ERROR:")
         print(e)
 
     finally:
-
         db.close()
 
 
 create_users()
+
+
+
 
 
 
