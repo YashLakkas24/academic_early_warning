@@ -32,5 +32,8 @@ export async function submitLogin(role, id, password) {
     throw new Error(data.detail || "Login failed. Please try again.");
   }
 
-  return data;
+  return {
+    ...data,
+    redirectTo: data.role === "teacher" ? "/teacher/dashboard" : "/student/dashboard",
+  };
 }
