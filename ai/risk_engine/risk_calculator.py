@@ -1,5 +1,6 @@
 from .trend import calculate_trend
 from .risk_factors import get_risk_factors
+from .risk_contribution import calculate_risk_contribution
 
 
 def calculate_risk(student):
@@ -19,6 +20,15 @@ def calculate_risk(student):
         trend_risk = 50
     else:
         trend_risk = 0
+
+    risk_contribution = calculate_risk_contribution(
+        attendance_risk,
+        internal_risk,
+        assignment_risk,
+        practical_risk,
+        previous_sem_risk,
+        trend_risk,
+    )
 
     risk_score = (
         attendance_risk * 0.25
@@ -43,6 +53,7 @@ def calculate_risk(student):
         "risk_level": risk_level,
         "trend": trend,
         "risk_factors": risk_factors,
+        "risk_contribution": risk_contribution,
         "hackathon_count": student["hackathon_count"],
         "extracurricular_count": student["extracurricular_count"],
     }
