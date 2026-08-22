@@ -1,0 +1,803 @@
+/* =====================================================================
+   TEACHER.CSS
+   Styles for TeacherWelcome + TeacherAnalytics and their child
+   components. Built entirely from tokens in styles/theme.css.
+   ===================================================================== */
+
+.teacher-shell {
+  min-height: 100vh;
+  background: var(--bg-canvas);
+  padding: 40px clamp(20px, 4vw, 56px) 64px;
+}
+
+.teacher-shell-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+/* ---------------------------------------------------------------------
+   Shared: top header bar used on both Welcome and Analytics
+   --------------------------------------------------------------------- */
+
+.teacher-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 36px;
+}
+
+.teacher-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.teacher-brand-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.teacher-profile-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  padding: 6px 16px 6px 6px;
+}
+
+.teacher-profile-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-indigo-soft);
+  color: var(--accent-indigo);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-family: var(--font-display);
+}
+
+.teacher-profile-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.teacher-profile-text strong {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.teacher-profile-text span {
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+}
+
+.teacher-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px 4px;
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.teacher-back-link:hover {
+  color: var(--text-primary);
+}
+
+/* ---------------------------------------------------------------------
+   Welcome page
+   --------------------------------------------------------------------- */
+
+.welcome-hero {
+  padding: clamp(28px, 5vw, 52px) clamp(24px, 5vw, 56px);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(60% 100% at 100% 0%, rgba(91, 124, 255, 0.14), transparent 60%);
+  pointer-events: none;
+}
+
+.welcome-eyebrow {
+  position: relative;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-blue);
+  margin-bottom: 14px;
+  display: block;
+}
+
+.welcome-heading {
+  position: relative;
+  font-size: clamp(28px, 3.6vw, 40px);
+  font-weight: 700;
+  color: var(--text-primary);
+  max-width: 640px;
+  line-height: 1.15;
+  margin-bottom: 10px;
+}
+
+.welcome-subheading {
+  position: relative;
+  font-size: 15px;
+  color: var(--text-secondary);
+  max-width: 560px;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.welcome-greeting {
+  position: relative;
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: 20px;
+}
+
+.welcome-greeting b {
+  color: var(--text-primary);
+}
+
+.profile-card {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  background: var(--bg-panel-soft);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: 32px;
+}
+
+.profile-card-field {
+  flex: 1 1 220px;
+  padding: 20px 24px;
+  border-right: 1px solid var(--border-subtle);
+}
+
+.profile-card-field:last-child {
+  border-right: none;
+}
+
+.profile-card-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+}
+
+.profile-card-value {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cta-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--accent-blue);
+  color: var(--text-on-accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 14px 24px;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.cta-btn:hover {
+  background: var(--accent-blue-strong);
+  box-shadow: 0 8px 20px rgba(91, 124, 255, 0.3);
+}
+
+.cta-btn:active {
+  transform: scale(0.98);
+}
+
+.cta-btn .arrow {
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.cta-btn:hover .arrow {
+  transform: translateX(3px);
+}
+
+/* ---------------------------------------------------------------------
+   Analytics page — header
+   --------------------------------------------------------------------- */
+
+.analytics-header {
+  margin-bottom: 28px;
+}
+
+.analytics-title {
+  font-size: clamp(24px, 3vw, 30px);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.analytics-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  max-width: 620px;
+  line-height: 1.55;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--text-tertiary);
+  margin-bottom: 10px;
+}
+
+.breadcrumb .crumb-current {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.breadcrumb .crumb-sep {
+  color: var(--text-tertiary);
+  opacity: 0.6;
+}
+
+/* ---------------------------------------------------------------------
+   Analytics grid + cards
+   --------------------------------------------------------------------- */
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  margin-bottom: 22px;
+}
+
+@media (max-width: 900px) {
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 26px 26px 22px;
+}
+
+.panel-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.panel-subtitle {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+
+/* ---------------------------------------------------------------------
+   Risk distribution chart
+   --------------------------------------------------------------------- */
+
+.risk-callout {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-panel-soft);
+  border: 1px solid var(--border-subtle);
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  min-height: 44px;
+}
+
+.risk-callout .dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Recharts draws a default UA focus outline on clicked bar/point shapes
+   (separate from our custom :focus-visible ring). Suppress it — the
+   active/selected state is already communicated via opacity + the
+   callout text below the chart. */
+.recharts-wrapper svg *:focus {
+  outline: none;
+}
+
+.risk-callout strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+/* ---------------------------------------------------------------------
+   Performance trend chart legend
+   --------------------------------------------------------------------- */
+
+.trend-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.trend-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.trend-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.trend-legend-line {
+  width: 16px;
+  height: 0;
+  border-top: 1.5px dashed var(--text-tertiary);
+}
+
+.trend-tooltip {
+  background: var(--bg-panel-raised);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  box-shadow: var(--shadow-raised);
+  font-size: 12.5px;
+}
+
+.trend-tooltip .tt-name {
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.trend-tooltip .tt-id {
+  color: var(--text-tertiary);
+  margin-bottom: 6px;
+  font-size: 11.5px;
+}
+
+.trend-tooltip .tt-trend {
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------
+   Risk section: filters + student list
+   --------------------------------------------------------------------- */
+
+.risk-section {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 26px 26px 28px;
+}
+
+.risk-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+  margin-bottom: 4px;
+}
+
+.risk-filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 20px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-medium);
+  background: var(--bg-panel-soft);
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
+}
+
+.risk-filter-btn:hover {
+  transform: translateY(-1px);
+}
+
+.risk-filter-btn .swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.risk-filter-btn.active[data-level='HIGH'] {
+  background: var(--risk-soft);
+  border-color: var(--risk);
+  color: var(--text-primary);
+}
+
+.risk-filter-btn.active[data-level='MEDIUM'] {
+  background: var(--warning-soft);
+  border-color: var(--warning);
+  color: var(--text-primary);
+}
+
+.risk-filter-btn.active[data-level='LOW'] {
+  background: var(--positive-soft);
+  border-color: var(--positive);
+  color: var(--text-primary);
+}
+
+.risk-filter-count {
+  font-size: 11.5px;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-tertiary);
+}
+
+/* ---- Student list ---- */
+
+.student-list {
+  margin-top: 20px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.student-list-heading {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: 12px;
+}
+
+.student-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--bg-panel-soft);
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-standard);
+}
+
+.student-row:last-child {
+  border-bottom: none;
+}
+
+.student-row:hover {
+  background: var(--bg-panel-raised);
+}
+
+.student-row-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.student-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--accent-blue-soft);
+  color: var(--accent-blue);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.student-row-name {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.student-row-id {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.student-row-side {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.risk-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 5px 11px;
+  border-radius: var(--radius-pill);
+}
+
+.risk-pill[data-level='HIGH'] {
+  background: var(--risk-soft);
+  color: #FF9C9C;
+}
+
+.risk-pill[data-level='MEDIUM'] {
+  background: var(--warning-soft);
+  color: #F5C27D;
+}
+
+.risk-pill[data-level='LOW'] {
+  background: var(--positive-soft);
+  color: #6BE0BB;
+}
+
+.row-chevron {
+  color: var(--text-tertiary);
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.student-row:hover .row-chevron {
+  transform: translateX(3px);
+  color: var(--text-secondary);
+}
+
+/* ---- Empty / error / loading states ---- */
+
+.state-card {
+  margin-top: 20px;
+  padding: 36px 24px;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--border-medium);
+  background: var(--bg-panel-soft);
+  text-align: center;
+}
+
+.state-card .state-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.state-card .state-body {
+  font-size: 13px;
+  color: var(--text-secondary);
+  max-width: 380px;
+  margin: 0 auto;
+  line-height: 1.55;
+}
+
+.state-card.error .state-title {
+  color: #FF9C9C;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-panel-soft) 25%, var(--bg-panel-raised) 37%, var(--bg-panel-soft) 63%);
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+.skeleton-block {
+  height: 220px;
+  width: 100%;
+}
+
+.skeleton-line {
+  height: 14px;
+  width: 60%;
+  margin-bottom: 10px;
+}
+
+/* ---------------------------------------------------------------------
+   Student detail view
+   --------------------------------------------------------------------- */
+
+.detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: transparent;
+  border: none;
+  color: var(--accent-blue);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 0;
+  margin-bottom: 18px;
+  transition: gap var(--duration-fast) var(--ease-standard);
+}
+
+.detail-back:hover {
+  gap: 10px;
+}
+
+.detail-heading {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.detail-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent-indigo-soft);
+  color: var(--accent-indigo);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 19px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.detail-heading h3 {
+  font-size: 21px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+}
+
+.detail-heading span {
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+.detail-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+@media (max-width: 720px) {
+  .detail-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stat-card {
+  background: var(--bg-panel-soft);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+}
+
+.stat-card .stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: 10px;
+}
+
+.stat-card .stat-value {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-section {
+  margin-bottom: 20px;
+}
+
+.detail-section-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: 10px;
+}
+
+.detail-section-body {
+  background: var(--bg-panel-soft);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--accent-blue);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.detail-section-body.suggestion {
+  border-left-color: var(--accent-indigo);
+}
+
+/* ---------------------------------------------------------------------
+   Simple fade/slide transition for view changes within Analytics
+   --------------------------------------------------------------------- */
+
+.view-transition {
+  animation: view-fade-in var(--duration-slow) var(--ease-standard);
+}
+
+@keyframes view-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
