@@ -1,99 +1,106 @@
-/**
- * teacherService.js
- * ---------------------------------------------------------------------
- * Single point of contact between the Teacher Dashboard UI and the
- * backend. Every function below returns a Promise so swapping the
- * mock implementation for real `fetch` calls later requires no changes
- * in any component — only the bodies of these functions change.
- *
- * Expected backend data shapes are documented above each function.
- * ---------------------------------------------------------------------
- */
-
-import {
-  mockTeacherProfile,
-  mockRiskSummary,
-  mockPerformanceTrend,
-  mockStudentsByRisk,
-  mockStudentDetails,
-} from './mockData';
-
-// Toggle this off once real endpoints exist. Kept in one place so the
-// switch-over is a one-line change.
-const USE_MOCK = true;
-
-// Base URL for the real API. Read from environment so it can differ
-// between local development, staging, and production builds.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
-
-const MOCK_DELAY_MS = 450;
-
-function mockResolve(value) {
-  return new Promise((resolve) => setTimeout(() => resolve(value), MOCK_DELAY_MS));
-}
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 async function apiGet(path) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: { Accept: 'application/json' },
+    headers: {
+      Accept: "application/json",
+    },
   });
+
   if (!response.ok) {
-    throw new Error(`Request to ${path} failed with status ${response.status}`);
+    throw new Error(
+      `Request to ${path} failed with status ${response.status}`
+    );
   }
+
   return response.json();
 }
 
-/**
- * GET teacher profile for the currently logged-in teacher.
- * Expected shape:
- * { teacher_name: string, teacher_id: string, department: string }
- */
-export function getTeacherProfile() {
-  if (USE_MOCK) return mockResolve(mockTeacherProfile);
-  return apiGet('/teacher/profile');
+let analyticsCache = null;
+
+export async function getTeacherAnalytics() {
+  if (!analyticsCache) {
+    analyticsCache = await apiGet("/teacher/analytics");
+  }
+
+  return analyticsCache;
 }
 
-/**
- * GET the current class-wide risk distribution.
- * Expected shape:
- * { high: number, medium: number, low: number }
- */
-export function getRiskSummary() {
-  if (USE_MOCK) return mockResolve(mockRiskSummary);
-  return apiGet('/teacher/risk-summary');
+// Teacher Welcome page
+// Temporary static profile because we haven't created
+// teacher profile storage in the backend yet.
+export async function getTeacherProfile() {
+  return {
+    teacher_name: "Teacher",
+    teacher_id: "TCH-001",
+    department: "AI & Data Science",
+  };
 }
 
-/**
- * GET performance trend points, one per student.
- * Expected shape (array):
- * [{ student_id, student_name, trend_score, trend }]
- * trend is one of "IMPROVING" | "STABLE" | "DECLINING".
- */
-export function getPerformanceTrend() {
-  if (USE_MOCK) return mockResolve(mockPerformanceTrend);
-  return apiGet('/teacher/performance-trend');
+// Risk chart
+export async function getRiskSummary() {
+  const data = await getTeacherAnalytics();
+
+  return {
+    high: data.risk_summary.HIGH,
+    medium: data.risk_summary.MEDIUM,
+    low: data.risk_summary.LOW,
+  };
 }
 
-/**
- * GET students belonging to a given risk level.
- * riskLevel: "HIGH" | "MEDIUM" | "LOW"
- * Expected shape (array):
- * [{ student_id, student_name, risk_score }]
- */
-export function getStudentsByRisk(riskLevel) {
-  if (USE_MOCK) return mockResolve(mockStudentsByRisk[riskLevel] || []);
-  return apiGet(`/teacher/students?risk=${encodeURIComponent(riskLevel)}`);
+// Performance trend
+export async function getPerformanceTrend() {
+  const data = await getTeacherAnalytics();
+
+  const allStudents = [
+    ...(data.students.HIGH || []),
+    ...(data.students.MEDIUM || []),
+    ...(data.students.LOW || []),
+  ];
+
+  return allStudents.map((student) => ({
+    student_id: student.student_id,
+    student_name: student.student_name,
+    trend_score: 0,
+    trend: "STABLE",
+  }));
 }
 
-/**
- * GET full detail for a single student, including the AI-generated
- * intervention and suggestion.
- * Expected shape:
- * {
- *   student_id, student_name, risk_level, risk_score,
- *   performance_trend, intervention, ai_suggestion
- * }
- */
-export function getStudentDetails(studentId) {
-  if (USE_MOCK) return mockResolve(mockStudentDetails[studentId] || null);
-  return apiGet(`/teacher/students/${encodeURIComponent(studentId)}`);
+// Students in selected risk category
+export async function getStudentsByRisk(riskLevel) {
+  const data = await getTeacherAnalytics();
+
+  return (data.students[riskLevel] || []).map((student) => ({
+    student_id: student.student_id,
+    student_name: student.student_name,
+    risk_level: student.risk_level,
+  }));
+}
+
+// Individual student
+export async function getStudentDetails(studentId) {
+  const data = await getTeacherAnalytics();
+
+  const allStudents = [
+    ...(data.students.HIGH || []),
+    ...(data.students.MEDIUM || []),
+    ...(data.students.LOW || []),
+  ];
+
+  const student = allStudents.find(
+    (item) => item.student_id === studentId
+  );
+
+  if (!student) {
+    throw new Error("Student not found");
+  }
+
+  return {
+    student_id: student.student_id,
+    student_name: student.student_name,
+    risk_level: student.risk_level,
+    performance_trend: "DECLINING",
+    intervention: student.intervention,
+    ai_suggestion: student.ai_analysis,
+  };
 }

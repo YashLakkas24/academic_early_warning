@@ -1,14 +1,24 @@
 import os
-from openai import OpenAI
+from pathlib import Path
 
+from openai import OpenAI
 from dotenv import load_dotenv
 
-load_dotenv()
+
+# Project root
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+# Load backend/.env explicitly
+ENV_PATH = PROJECT_ROOT / "backend" / ".env"
+
+load_dotenv(ENV_PATH)
+
+api_key = os.getenv("OPENAI_API_KEY")
 
 client = OpenAI(
-    base_url="https://ai.tcetcercd.in/v1", api_key=os.getenv("OPENAI_API_KEY")
+    base_url="https://ai.tcetcercd.in/v1",
+    api_key=api_key
 )
-
 
 def generate_ai_analysis(student, risk_result):
     prompt = f"""You are an academic early-warning assistant for a college.
@@ -56,8 +66,14 @@ def generate_ai_analysis(student, risk_result):
         12. Do not claim that a factor is a major contributor unless the supplied risk contribution supports it.
     """
 
-    response = client.chat.completions.create(
-        model="qwen3.6", messages=[{"role": "user", "content": prompt}]
-    )
+    try:
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            return "AI analysis unavailable: OPENAI_API_KEY environment variable is not set."
+        response = client.chat.completions.create(
+            model="qwen3.6", messages=[{"role": "user", "content": prompt}]
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        return f"AI analysis unavailable: {str(e)}"
 
-    return response.choices[0].message.content
