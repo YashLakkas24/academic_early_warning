@@ -5,11 +5,14 @@ import RiskDistributionChart from '../../components/teacher/RiskDistributionChar
 import RiskFilters from '../../components/teacher/RiskFilters';
 import StudentRiskList from '../../components/teacher/StudentRiskList';
 import StudentDetail from '../../components/teacher/StudentDetail';
+
 import {
   getRiskSummary,
   getStudentsByRisk,
   getStudentDetails,
+  getTeacherProfile,
 } from '../../services/teacherService';
+
 import './teacher.css';
 
 const RISK_LABEL = {
@@ -20,6 +23,12 @@ const RISK_LABEL = {
 
 export default function TeacherAnalytics() {
   const navigate = useNavigate();
+
+  // ---------------------------------------------------------
+  // Teacher profile
+  // ---------------------------------------------------------
+
+  const [profile, setProfile] = useState(null);
 
   const [summary, setSummary] = useState(null);
   const [summaryStatus, setSummaryStatus] = useState('loading');
@@ -34,22 +43,50 @@ export default function TeacherAnalytics() {
   const [studentDetail, setStudentDetail] = useState(null);
   const [studentDetailStatus, setStudentDetailStatus] = useState('idle');
 
-  // Load real analytics from backend
+  // ---------------------------------------------------------
+  // Load teacher profile + analytics
+  // ---------------------------------------------------------
+
   useEffect(() => {
+    let cancelled = false;
+
+    // Load teacher profile
+    getTeacherProfile()
+      .then((data) => {
+        if (cancelled) return;
+        setProfile(data);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        console.error('Failed to load teacher profile:', error);
+      });
+
+    // Load analytics
     setSummaryStatus('loading');
 
     getRiskSummary()
       .then((data) => {
+        if (cancelled) return;
+
         setSummary(data);
         setSummaryStatus('ready');
       })
       .catch((error) => {
+        if (cancelled) return;
+
         console.error('Failed to load risk summary:', error);
         setSummaryStatus('error');
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
+  // ---------------------------------------------------------
   // Load students when teacher selects a risk category
+  // ---------------------------------------------------------
+
   useEffect(() => {
     if (!selectedRisk) return;
 
@@ -76,7 +113,10 @@ export default function TeacherAnalytics() {
     };
   }, [selectedRisk]);
 
+  // ---------------------------------------------------------
   // Load selected student's details
+  // ---------------------------------------------------------
+
   useEffect(() => {
     if (!selectedStudentId) return;
 
@@ -103,24 +143,40 @@ export default function TeacherAnalytics() {
     };
   }, [selectedStudentId]);
 
+  // ---------------------------------------------------------
+  // Select risk category
+  // ---------------------------------------------------------
+
   const handleSelectRisk = useCallback((riskLevel) => {
     setSelectedRisk(riskLevel);
+    setSelectedStudentId(null);
+    setStudentDetail(null);
     setViewMode('list');
   }, []);
+
+  // ---------------------------------------------------------
+  // Select student
+  // ---------------------------------------------------------
 
   const handleSelectStudent = useCallback((studentId) => {
     setSelectedStudentId(studentId);
     setViewMode('detail');
   }, []);
 
+  // ---------------------------------------------------------
+  // Back navigation
+  // ---------------------------------------------------------
+
   const handleBack = useCallback(() => {
     if (viewMode === 'detail') {
       setSelectedStudentId(null);
       setStudentDetail(null);
+      setStudentDetailStatus('idle');
       setViewMode('list');
     } else if (viewMode === 'list') {
       setSelectedRisk(null);
       setStudentList([]);
+      setStudentListStatus('idle');
       setViewMode('overview');
     }
   }, [viewMode]);
@@ -129,16 +185,25 @@ export default function TeacherAnalytics() {
     <div className="teacher-shell">
       <div className="teacher-shell-inner">
 
+        {/* -------------------------------------------------
+            Teacher Header
+            ------------------------------------------------- */}
+
         <TeacherHeader
-          profile={null}
-          onBack={() => navigate('/teacher')}
+          profile={profile}
+          onBack={() => navigate('/teacher/dashboard')}
           backLabel="Teacher Home"
         />
+
+        {/* -------------------------------------------------
+            Analytics Header
+            ------------------------------------------------- */}
 
         <div className="analytics-header">
 
           {viewMode !== 'overview' && (
             <div className="breadcrumb">
+
               <span>Analytics</span>
 
               <span className="crumb-sep">/</span>
@@ -151,7 +216,9 @@ export default function TeacherAnalytics() {
 
               {viewMode === 'detail' && (
                 <>
-                  <span>{RISK_LABEL[selectedRisk]} Risk</span>
+                  <span>
+                    {RISK_LABEL[selectedRisk]} Risk
+                  </span>
 
                   <span className="crumb-sep">/</span>
 
@@ -162,6 +229,7 @@ export default function TeacherAnalytics() {
                   </span>
                 </>
               )}
+
             </div>
           )}
 
@@ -172,27 +240,34 @@ export default function TeacherAnalytics() {
           <p className="analytics-subtitle">
             Review student risk levels and recommended interventions.
           </p>
+
         </div>
 
-        {/* ================= OVERVIEW ================= */}
+        {/* =================================================
+            OVERVIEW
+            ================================================= */}
 
         {viewMode === 'overview' && (
           <div className="view-transition">
 
             {summaryStatus === 'loading' && (
               <div className="panel">
+
                 <div
                   className="skeleton skeleton-line"
                   style={{ width: '50%' }}
                 />
 
                 <div className="skeleton skeleton-block" />
+
               </div>
             )}
 
             {summaryStatus === 'error' && (
               <div className="panel">
+
                 <div className="state-card error">
+
                   <div className="state-title">
                     Unable to load analytics.
                   </div>
@@ -200,31 +275,40 @@ export default function TeacherAnalytics() {
                   <div className="state-body">
                     Please make sure the backend is running.
                   </div>
+
                 </div>
+
               </div>
             )}
 
             {summaryStatus === 'ready' && (
               <>
                 <div className="analytics-grid">
+
                   <RiskDistributionChart
                     summary={summary}
                   />
+
                 </div>
 
                 <div className="risk-section">
+
                   <RiskFilters
                     summary={summary}
                     selectedRisk={selectedRisk}
                     onSelect={handleSelectRisk}
                   />
+
                 </div>
               </>
             )}
+
           </div>
         )}
 
-        {/* ================= STUDENT LIST ================= */}
+        {/* =================================================
+            STUDENT LIST
+            ================================================= */}
 
         {viewMode === 'list' && (
           <div className="risk-section view-transition">
@@ -253,7 +337,9 @@ export default function TeacherAnalytics() {
           </div>
         )}
 
-        {/* ================= STUDENT DETAIL ================= */}
+        {/* =================================================
+            STUDENT DETAIL
+            ================================================= */}
 
         {viewMode === 'detail' && (
           <div className="risk-section view-transition">

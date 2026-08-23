@@ -29,7 +29,10 @@ export default function StudentDetail({
 
         <div
           className="skeleton skeleton-block"
-          style={{ height: 180, marginTop: 16 }}
+          style={{
+            height: 180,
+            marginTop: 16,
+          }}
         />
       </div>
     );
@@ -49,12 +52,17 @@ export default function StudentDetail({
     );
   }
 
-  const intervention = student.intervention;
+  const intervention =
+    student.intervention?.reasons || [];
+
+  const aiSuggestion =
+    student.ai_suggestion || '';
 
   return (
     <div>
 
       {/* Back button */}
+
       <button
         type="button"
         className="detail-back"
@@ -63,7 +71,9 @@ export default function StudentDetail({
         ← Back to {riskLevel} Risk Students
       </button>
 
+
       {/* Student identity */}
+
       <div className="detail-heading">
 
         <div className="detail-avatar">
@@ -71,34 +81,46 @@ export default function StudentDetail({
         </div>
 
         <div>
-          <h3>{student.student_name}</h3>
+
+          <h3>
+            {student.student_name}
+          </h3>
 
           <span>
             Student ID: {student.student_id}
           </span>
+
         </div>
 
       </div>
 
+
       {/* Risk information */}
+
       <div className="detail-stats">
 
         <div className="stat-card">
+
           <div className="stat-label">
             Risk Level
           </div>
 
           <div className="stat-value">
+
             <span
               className="risk-pill"
               data-level={student.risk_level}
             >
               {student.risk_level}
             </span>
+
           </div>
+
         </div>
 
+
         {student.performance_trend && (
+
           <div className="stat-card">
 
             <div className="stat-label">
@@ -108,10 +130,14 @@ export default function StudentDetail({
             <div className="stat-value">
 
               <span>
-                {TREND_ICON[student.performance_trend]}
+                {TREND_ICON[
+                  student.performance_trend
+                ] || '➖'}
               </span>
 
-              {student.performance_trend.charAt(0) +
+              {student.performance_trend
+                .charAt(0)
+                .toUpperCase() +
                 student.performance_trend
                   .slice(1)
                   .toLowerCase()}
@@ -119,11 +145,16 @@ export default function StudentDetail({
             </div>
 
           </div>
+
         )}
 
       </div>
 
-      {/* AI Intervention */}
+
+      {/* =================================================
+          AI INTERVENTION
+          ================================================= */}
+
       <div className="detail-section">
 
         <div className="detail-section-label">
@@ -132,28 +163,40 @@ export default function StudentDetail({
 
         <div className="detail-section-body">
 
-          {intervention?.reasons?.length > 0 && (
-            <ul>
-              {intervention.reasons.map((reason, index) => (
-                <li key={index}>
-                  {reason}
-                </li>
-              ))}
-            </ul>
-          )}
+          {intervention.length > 0 ? (
 
-          {intervention?.recommendation && (
+            <ul>
+
+              {intervention
+                .slice(0, 2)
+                .map((line, index) => (
+
+                  <li key={index}>
+                    {line}
+                  </li>
+
+                ))}
+
+            </ul>
+
+          ) : (
+
             <p>
-              <strong>Recommendation:</strong>{' '}
-              {intervention.recommendation}
+              AI intervention is currently
+              unavailable.
             </p>
+
           )}
 
         </div>
 
       </div>
 
-      {/* AI Analysis */}
+
+      {/* =================================================
+          AI SUGGESTION
+          ================================================= */}
+
       <div className="detail-section">
 
         <div className="detail-section-label">
@@ -161,8 +204,10 @@ export default function StudentDetail({
         </div>
 
         <div className="detail-section-body suggestion">
-          {student.ai_analysis ||
-            'AI analysis is currently unavailable.'}
+
+          {aiSuggestion ||
+            'AI suggestion is currently unavailable.'}
+
         </div>
 
       </div>
