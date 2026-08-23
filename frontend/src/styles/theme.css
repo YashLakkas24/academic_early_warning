@@ -1,79 +1,362 @@
 /*
   THEME.CSS
-  ---------
-  This is the single source of truth for color, spacing, radius, shadow and
-  motion across the entire product (Landing, Login, and every future
-  dashboard). Pages and components should reference these variables instead
-  of hard-coding colors, so that when Teacher/Student/Parent dashboards are
-  built later, they automatically look like the same product.
+  ----------
+  Single source of truth for the Academic Early Warning product.
+
+  This file preserves the existing Landing/Login design tokens and also
+  provides the shared tokens required by Teacher, Student and Parent
+  dashboards.
 */
 
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
 :root {
+
+  /* ============================================================
+     EXISTING PRODUCT TOKENS
+     ============================================================ */
+
   /* ---------- Backgrounds ---------- */
-  --color-bg-primary: #0a0e1a;      /* deep navy / midnight — page background */
-  --color-bg-secondary: #0d1220;    /* slightly lighter blue-black — section alternation */
-  --color-surface: #131a2b;         /* cards, panels */
-  --color-surface-hover: #1a2236;   /* hovered cards, inputs on focus */
-  --color-surface-raised: #171f33;  /* elevated surfaces, e.g. the hero product card */
+  --color-bg-primary: #0a0e1a;
+  --color-bg-secondary: #0d1220;
+  --color-surface: #131a2b;
+  --color-surface-hover: #1a2236;
+  --color-surface-raised: #171f33;
 
   /* ---------- Accents ---------- */
-  --color-primary: #4c8dff;         /* electric/soft blue — primary actions, links */
-  --color-primary-light: #7bb0ff;   /* hover/lighter variant */
+  --color-primary: #4c8dff;
+  --color-primary-light: #7bb0ff;
   --color-primary-dim: rgba(76, 141, 255, 0.14);
-  --color-secondary: #8a7cf2;       /* subtle violet/indigo — secondary accent */
+
+  --color-secondary: #8a7cf2;
   --color-secondary-dim: rgba(138, 124, 242, 0.14);
 
   /* ---------- Status ---------- */
   --color-success: #34c77b;
   --color-success-dim: rgba(52, 199, 123, 0.14);
+
   --color-warning: #f0a93e;
   --color-warning-dim: rgba(240, 169, 62, 0.14);
+
   --color-danger: #e5605a;
   --color-danger-dim: rgba(229, 96, 90, 0.14);
 
   /* ---------- Text ---------- */
-  --color-text-primary: #f2f4f8;    /* near-white */
-  --color-text-secondary: #9aa5bc;  /* muted blue-gray */
-  --color-text-muted: #5f6b82;      /* faint labels, captions */
+  --color-text-primary: #f2f4f8;
+  --color-text-secondary: #9aa5bc;
+  --color-text-muted: #5f6b82;
 
   /* ---------- Borders ---------- */
   --color-border: rgba(255, 255, 255, 0.08);
   --color-border-strong: rgba(255, 255, 255, 0.14);
 
-  /* ---------- Radius ---------- */
+  /* ---------- Existing Radius ---------- */
   --radius-small: 8px;
   --radius-medium: 14px;
   --radius-large: 22px;
   --radius-full: 999px;
 
-  /* ---------- Shadow ---------- */
+  /* ---------- Existing Shadows ---------- */
   --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.35);
-  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 12px 40px rgba(0, 0, 0, 0.4);
-  --shadow-glow-primary: 0 0 0 1px rgba(76, 141, 255, 0.25), 0 0 40px rgba(76, 141, 255, 0.12);
 
-  /* ---------- Motion ---------- */
+  --shadow-card-existing:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 12px 40px rgba(0, 0, 0, 0.4);
+
+  --shadow-glow-primary:
+    0 0 0 1px rgba(76, 141, 255, 0.25),
+    0 0 40px rgba(76, 141, 255, 0.12);
+
+
+  /* ============================================================
+     DASHBOARD TOKENS
+     ============================================================ */
+
+  /* ---------- Surfaces ---------- */
+
+  --bg-app: #0a0e1a;
+
+  --bg-canvas:
+    radial-gradient(
+      120% 120% at 15% 0%,
+      #101c38 0%,
+      #0a1122 55%,
+      #070c18 100%
+    );
+
+  --bg-panel: #131a2b;
+
+  --bg-panel-raised: #171f33;
+
+  --bg-panel-soft: #0d1626;
+
+  --bg-input: #0d1730;
+
+
+  /* ---------- Borders ---------- */
+
+  --border-subtle: rgba(255, 255, 255, 0.07);
+
+  --border-medium: rgba(255, 255, 255, 0.12);
+
+  --border-accent: rgba(90, 124, 255, 0.35);
+
+
+  /* ---------- Text ---------- */
+
+  --text-primary: #f2f4f8;
+
+  --text-secondary: #9aa5bc;
+
+  --text-tertiary: #5f6b82;
+
+  --text-on-accent: #ffffff;
+
+
+  /* ---------- Accent System ---------- */
+
+  --accent-blue: #4c8dff;
+
+  --accent-blue-strong: #3e5de0;
+
+  --accent-blue-soft: rgba(76, 141, 255, 0.14);
+
+  --accent-indigo: #8a7cf2;
+
+  --accent-indigo-soft: rgba(138, 124, 242, 0.14);
+
+
+  /* ---------- Status ---------- */
+
+  --positive: #34c77b;
+
+  --positive-soft: rgba(52, 199, 123, 0.14);
+
+  --warning: #f0a93e;
+
+  --warning-soft: rgba(240, 169, 62, 0.14);
+
+  --risk: #e5605a;
+
+  --risk-soft: rgba(229, 96, 90, 0.14);
+
+
+  /* ---------- Dashboard Radius ---------- */
+
+  --radius-sm: 8px;
+
+  --radius-md: 14px;
+
+  --radius-lg: 22px;
+
+  --radius-pill: 999px;
+
+
+  /* ---------- Dashboard Shadows ---------- */
+
+  --shadow-card:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 12px 40px rgba(0, 0, 0, 0.4);
+
+  --shadow-raised:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 18px 44px rgba(2, 6, 16, 0.55);
+
+  --shadow-focus:
+    0 0 0 3px rgba(76, 141, 255, 0.35);
+
+
+  /* ============================================================
+     TYPOGRAPHY
+     ============================================================ */
+
+  --font-display:
+    "Space Grotesk",
+    "Inter",
+    system-ui,
+    sans-serif;
+
+  --font-body:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
+
+  --font-mono:
+    "JetBrains Mono",
+    ui-monospace,
+    SFMono-Regular,
+    monospace;
+
+
+  /* ============================================================
+     MOTION
+     ============================================================ */
+
   --transition-fast: 150ms ease;
-  --transition-normal: 280ms cubic-bezier(0.22, 1, 0.36, 1);
-  --transition-slow: 600ms cubic-bezier(0.22, 1, 0.36, 1);
 
-  /* ---------- Typography ---------- */
-  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
-  --font-body: "Inter", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --transition-normal:
+    280ms cubic-bezier(0.22, 1, 0.36, 1);
 
-  /* ---------- Layout ---------- */
+  --transition-slow:
+    600ms cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Dashboard aliases */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --duration-fast: 140ms;
+
+  --duration-base: 220ms;
+
+  --duration-slow: 360ms;
+
+
+  /* ============================================================
+     LAYOUT
+     ============================================================ */
+
   --max-width: 1240px;
+
   --nav-height: 76px;
 }
 
-/* Respect users who prefer reduced motion, globally */
+
+/* ================================================================
+   GLOBAL RESET
+   ================================================================ */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+
+  background: var(--color-bg-primary);
+
+  color: var(--color-text-primary);
+
+  font-family: var(--font-body);
+
+  -webkit-font-smoothing: antialiased;
+
+  text-rendering: optimizeLegibility;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+
+/* ================================================================
+   TYPOGRAPHY
+   ================================================================ */
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+
+  font-family: var(--font-display);
+
+  letter-spacing: -0.01em;
+}
+
+p {
+  margin: 0;
+}
+
+
+/* ================================================================
+   FORM ELEMENTS
+   ================================================================ */
+
+button,
+input,
+textarea,
+select {
+  font-family: var(--font-body);
+}
+
+button {
+  cursor: pointer;
+}
+
+
+/* ================================================================
+   LINKS
+   ================================================================ */
+
+a {
+  color: inherit;
+}
+
+
+/* ================================================================
+   SELECTION
+   ================================================================ */
+
+::selection {
+  background: var(--accent-blue-soft);
+}
+
+
+/* ================================================================
+   ACCESSIBILITY
+   ================================================================ */
+
+:focus-visible {
+  outline: none;
+
+  box-shadow: var(--shadow-focus);
+
+  border-radius: var(--radius-sm);
+}
+
+
+/* ================================================================
+   VISUALLY HIDDEN
+   ================================================================ */
+
+.visually-hidden {
+  position: absolute;
+
+  width: 1px;
+  height: 1px;
+
+  padding: 0;
+  margin: -1px;
+
+  overflow: hidden;
+
+  clip: rect(0 0 0 0);
+
+  white-space: nowrap;
+
+  border: 0;
+}
+
+
+/* ================================================================
+   REDUCED MOTION
+   ================================================================ */
+
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
+
     animation-duration: 0.001ms !important;
+
     animation-iteration-count: 1 !important;
+
     transition-duration: 0.001ms !important;
+
     scroll-behavior: auto !important;
   }
 }
