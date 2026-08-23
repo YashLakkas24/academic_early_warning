@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Landing from "./pages/Landing/Landing";
 import Login from "./pages/Login/Login";
-import TeacherDashboard from "./pages/Teacher/TeacherDashboard";
+import TeacherDashboard from "./pages/teachers-dash/TeacherWelcome";
 import StudentDashboard from "./pages/Student/StudentDashboard";
 import ParentDashboard from "./pages/Parent/ParentDashboard";
 
@@ -17,7 +17,7 @@ function App() {
         <Route path="/login" element={<Login />} />
 
         {/* Placeholder routes only — dashboards are built in a future task */}
-        <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+        <Route path="/teacher/dashboard" element={<TeacherWelcome />} />
         <Route path="/student/dashboard" element={<StudentDashboard />} />
         <Route path="/parent/dashboard" element={<ParentDashboard />} />
       </Routes>
