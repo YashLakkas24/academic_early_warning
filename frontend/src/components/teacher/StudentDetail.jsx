@@ -9,7 +9,7 @@ function initialsOf(name = '') {
     .split(' ')
     .filter(Boolean)
     .slice(0, 2)
-    .map((part) => part[0].toUpperCase())
+    .map((part) => part[0]?.toUpperCase())
     .join('');
 }
 
@@ -19,6 +19,10 @@ export default function StudentDetail({
   riskLevel,
   onBack,
 }) {
+  // =========================================================
+  // LOADING
+  // =========================================================
+
   if (status === 'loading') {
     return (
       <div>
@@ -38,6 +42,10 @@ export default function StudentDetail({
     );
   }
 
+  // =========================================================
+  // ERROR
+  // =========================================================
+
   if (status === 'error' || !student) {
     return (
       <div className="state-card error">
@@ -52,16 +60,53 @@ export default function StudentDetail({
     );
   }
 
-  const intervention =
-    student.intervention?.reasons || [];
+  // =========================================================
+  // DATA
+  // =========================================================
+
+  const intervention = student.intervention || {};
+
+  const interventionReasons = Array.isArray(
+    intervention.reasons
+  )
+    ? intervention.reasons
+    : [];
+
+  /*
+   * Backend currently returns the AI suggestion as:
+   *
+   * ai_analysis: "Implement a structured study plan..."
+   *
+   * teacherService.js should normalize this to ai_suggestion.
+   *
+   * We support BOTH here so the UI does not break.
+   */
 
   const aiSuggestion =
-    student.ai_suggestion || '';
+    student.ai_suggestion ||
+    student.ai_analysis ||
+    'AI suggestion is currently unavailable.';
+
+  const performanceTrend =
+    student.performance_trend || 'STABLE';
+
+  const trendIcon =
+    TREND_ICON[performanceTrend] || TREND_ICON.STABLE;
+
+  const formattedTrend =
+    performanceTrend.charAt(0) +
+    performanceTrend.slice(1).toLowerCase();
+
+  // =========================================================
+  // STUDENT DETAIL
+  // =========================================================
 
   return (
     <div>
 
-      {/* Back button */}
+      {/* =====================================================
+          BACK BUTTON
+          ===================================================== */}
 
       <button
         type="button"
@@ -72,7 +117,9 @@ export default function StudentDetail({
       </button>
 
 
-      {/* Student identity */}
+      {/* =====================================================
+          STUDENT IDENTITY
+          ===================================================== */}
 
       <div className="detail-heading">
 
@@ -81,7 +128,6 @@ export default function StudentDetail({
         </div>
 
         <div>
-
           <h3>
             {student.student_name}
           </h3>
@@ -89,15 +135,18 @@ export default function StudentDetail({
           <span>
             Student ID: {student.student_id}
           </span>
-
         </div>
 
       </div>
 
 
-      {/* Risk information */}
+      {/* =====================================================
+          RISK INFORMATION
+          ===================================================== */}
 
       <div className="detail-stats">
+
+        {/* Risk Level */}
 
         <div className="stat-card">
 
@@ -119,41 +168,32 @@ export default function StudentDetail({
         </div>
 
 
-        {student.performance_trend && (
+        {/* Performance Trend */}
 
-          <div className="stat-card">
+        <div className="stat-card">
 
-            <div className="stat-label">
-              Performance Trend
-            </div>
+          <div className="stat-label">
+            Performance Trend
+          </div>
 
-            <div className="stat-value">
+          <div className="stat-value">
 
-              <span>
-                {TREND_ICON[
-                  student.performance_trend
-                ] || '➖'}
-              </span>
+            <span>
+              {trendIcon}
+            </span>
 
-              {student.performance_trend
-                .charAt(0)
-                .toUpperCase() +
-                student.performance_trend
-                  .slice(1)
-                  .toLowerCase()}
-
-            </div>
+            {formattedTrend}
 
           </div>
 
-        )}
+        </div>
 
       </div>
 
 
-      {/* =================================================
+      {/* =====================================================
           AI INTERVENTION
-          ================================================= */}
+          ===================================================== */}
 
       <div className="detail-section">
 
@@ -163,27 +203,23 @@ export default function StudentDetail({
 
         <div className="detail-section-body">
 
-          {intervention.length > 0 ? (
+          {interventionReasons.length > 0 ? (
 
             <ul>
-
-              {intervention
-                .slice(0, 2)
-                .map((line, index) => (
-
+              {interventionReasons.map(
+                (reason, index) => (
                   <li key={index}>
-                    {line}
+                    {reason}
                   </li>
-
-                ))}
-
+                )
+              )}
             </ul>
 
           ) : (
 
             <p>
-              AI intervention is currently
-              unavailable.
+              AI intervention information is
+              currently unavailable.
             </p>
 
           )}
@@ -193,9 +229,9 @@ export default function StudentDetail({
       </div>
 
 
-      {/* =================================================
+      {/* =====================================================
           AI SUGGESTION
-          ================================================= */}
+          ===================================================== */}
 
       <div className="detail-section">
 
@@ -205,8 +241,7 @@ export default function StudentDetail({
 
         <div className="detail-section-body suggestion">
 
-          {aiSuggestion ||
-            'AI suggestion is currently unavailable.'}
+          {aiSuggestion}
 
         </div>
 

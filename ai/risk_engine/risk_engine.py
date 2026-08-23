@@ -1,37 +1,20 @@
 import pandas as pd
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from .validator import validate_data
 from .risk_calculator import calculate_risk
 from .explainability import generate_explanation
-from .ai_analysis import generate_ai_analysis
 
-
-# =========================================================
-# CONFIGURATION
-# =========================================================
-
-# Number of AI requests that can run simultaneously.
-#
-# 5 is deliberately moderate so that we do not overload
-# the AI service with 10 simultaneous requests.
-AI_WORKERS = 5
-
-
-# =========================================================
-# ANALYZE ONE STUDENT
-# =========================================================
 
 def analyze_student(student):
 
     # -----------------------------------------------------
-    # STEP 1: Existing deterministic risk calculation
+    # STEP 1: Calculate deterministic risk
     # -----------------------------------------------------
 
     result = calculate_risk(student)
 
     # -----------------------------------------------------
-    # STEP 2: Existing explainability
+    # STEP 2: Generate deterministic explanation
     # -----------------------------------------------------
 
     explanation = generate_explanation(
@@ -43,16 +26,7 @@ def analyze_student(student):
     result["explanation"] = explanation
 
     # -----------------------------------------------------
-    # STEP 3: REAL AI ANALYSIS
-    # -----------------------------------------------------
-
-    result["ai_analysis"] = generate_ai_analysis(
-        student,
-        result
-    )
-
-    # -----------------------------------------------------
-    # STEP 4: Student identity
+    # STEP 3: Student identity
     # -----------------------------------------------------
 
     result["student_id"] = student["student_id"]
@@ -60,14 +34,17 @@ def analyze_student(student):
 
     return result
 
-
-# =========================================================
-# ANALYZE DATASET
-# =========================================================
-
 def analyze_dataset(df):
 
+    # -----------------------------------------------------
+    # Validate dataset
+    # -----------------------------------------------------
+
     validate_data(df)
+
+    # -----------------------------------------------------
+    # Convert dataframe rows into student records
+    # -----------------------------------------------------
 
     students = [
         student
@@ -76,63 +53,19 @@ def analyze_dataset(df):
 
     results = []
 
-    # =====================================================
-    # RUN AI ANALYSIS IN PARALLEL
-    # =====================================================
+    # -----------------------------------------------------
+    # Calculate deterministic risk for every student
+    # -----------------------------------------------------
 
-    with ThreadPoolExecutor(
-        max_workers=AI_WORKERS
-    ) as executor:
+    for student in students:
 
-        futures = {
-            executor.submit(
-                analyze_student,
-                student
-            ): index
-            for index, student in enumerate(students)
-        }
+        result = analyze_student(student)
 
-        completed_results = {}
+        results.append(result)
 
-        for future in as_completed(futures):
-
-            index = futures[future]
-
-            try:
-
-                completed_results[index] = future.result()
-
-            except Exception as e:
-
-                # Do not allow one student to break the
-                # complete analytics page.
-
-                student = students[index]
-
-                completed_results[index] = {
-                    "student_id": student["student_id"],
-                    "name": student["name"],
-                    "risk_level": "LOW",
-                    "risk_score": 0,
-                    "trend": "STABLE",
-                    "risk_factors": [],
-                    "risk_contribution": {},
-                    "explanation": "",
-                    "ai_analysis": (
-                        "AI analysis unavailable: "
-                        f"{str(e)}"
-                    )
-                }
-
-    # =====================================================
-    # KEEP ORIGINAL CSV ORDER
-    # =====================================================
-
-    for index in range(len(students)):
-
-        results.append(
-            completed_results[index]
-        )
+    # -----------------------------------------------------
+    # Return results in original CSV order
+    # -----------------------------------------------------
 
     return results
 

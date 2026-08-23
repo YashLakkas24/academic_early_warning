@@ -1,42 +1,85 @@
 const API_BASE_URL = "http://127.0.0.1:8000/api";
 
+// =========================================================
+// BASIC GET REQUEST
+// =========================================================
+
 async function apiGet(path) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: "GET",
     headers: {
       Accept: "application/json",
     },
   });
 
   if (!response.ok) {
-    throw new Error(
-      `Request to ${path} failed with status ${response.status}`
-    );
+    let errorMessage = `Request to ${path} failed with status ${response.status}`;
+
+    try {
+      const errorData = await response.json();
+
+      if (errorData?.detail) {
+        errorMessage = errorData.detail;
+      }
+    } catch {
+      // Ignore JSON parsing errors
+    }
+
+    throw new Error(errorMessage);
   }
 
   return response.json();
 }
 
+
+// =========================================================
+// ANALYTICS CACHE
+// =========================================================
+//
+// IMPORTANT:
+// This cache stores ONLY the teacher analytics response.
+//
+// It does NOT contain AI student details.
+//
+// AI analysis is requested separately when a student
+// is opened.
+//
+
 let analyticsCache = null;
 
-/**
- * Get complete teacher analytics.
- *
- * Backend:
- * GET /api/teacher/analytics
- */
+
+// =========================================================
+// GET TEACHER ANALYTICS
+// =========================================================
+//
+// Backend:
+// GET /api/teacher/analytics
+//
+// This endpoint should be fast because it does NOT
+// generate AI analysis.
+//
+
 export async function getTeacherAnalytics() {
-  if (!analyticsCache) {
-    analyticsCache = await apiGet("/teacher/analytics");
+  if (analyticsCache !== null) {
+    return analyticsCache;
   }
 
-  return analyticsCache;
+  const data = await apiGet("/teacher/analytics");
+
+  analyticsCache = data;
+
+  return data;
 }
 
-/**
- * Teacher profile.
- *
- * Currently using temporary static data.
- */
+
+// =========================================================
+// GET TEACHER PROFILE
+// =========================================================
+//
+// Currently reads logged-in teacher information
+// from localStorage.
+//
+
 export async function getTeacherProfile() {
   const storedUser = localStorage.getItem("user");
 
@@ -57,138 +100,300 @@ export async function getTeacherProfile() {
   }
 
   return {
-    teacher_name: user.full_name,
-    teacher_id: user.user_id,
-    department: user.department || "AI & Data Science",
+    teacher_name:
+      user.full_name ||
+      user.name ||
+      "Teacher",
+
+    teacher_id:
+      user.user_id ||
+      user.id ||
+      "",
+
+    department:
+      user.department ||
+      "AI & Data Science",
   };
 }
 
 
-/**
- * Get risk distribution summary.
- */
+// =========================================================
+// GET RISK SUMMARY
+// =========================================================
+//
+// Returns:
+// {
+//   high: 1,
+//   medium: 4,
+//   low: 5
+// }
+//
+
 export async function getRiskSummary() {
   const data = await getTeacherAnalytics();
 
   return {
-    high: data.risk_summary?.HIGH ?? 0,
-    medium: data.risk_summary?.MEDIUM ?? 0,
-    low: data.risk_summary?.LOW ?? 0,
+    high: Number(data?.risk_summary?.HIGH ?? 0),
+    medium: Number(data?.risk_summary?.MEDIUM ?? 0),
+    low: Number(data?.risk_summary?.LOW ?? 0),
   };
 }
 
-/**
- * Get performance trend for all students.
- *
- * Uses the actual values returned by the risk engine.
- */
+
+// =========================================================
+// GET PERFORMANCE TREND
+// =========================================================
+
 export async function getPerformanceTrend() {
   const data = await getTeacherAnalytics();
 
   const allStudents = [
-    ...(data.students?.HIGH || []),
-    ...(data.students?.MEDIUM || []),
-    ...(data.students?.LOW || []),
+    ...(data?.students?.HIGH || []),
+    ...(data?.students?.MEDIUM || []),
+    ...(data?.students?.LOW || []),
   ];
 
   return allStudents.map((student) => ({
     student_id: student.student_id,
-    student_name: student.student_name,
-    trend_score: student.trend_score ?? 0,
+
+    student_name:
+      student.student_name ||
+      student.name ||
+      "Unknown Student",
+
+    trend_score:
+      student.trend_score ??
+      student.risk_score ??
+      0,
+
     trend:
-      student.performance_trend ??
-      student.trend ??
+      student.performance_trend ||
+      student.trend ||
       "STABLE",
   }));
 }
 
-/**
- * Get students belonging to a particular risk category.
- *
- * Example:
- * getStudentsByRisk("HIGH")
- */
-export async function getStudentsByRisk(riskLevel) {
-  const data = await getTeacherAnalytics();
 
-  const normalizedRisk = riskLevel?.toUpperCase();
+// =========================================================
+// GET STUDENTS BY RISK
+// =========================================================
+//
+// Example:
+// getStudentsByRisk("HIGH")
+//
+// IMPORTANT:
+// This does NOT call AI.
+//
+
+export async function getStudentsByRisk(riskLevel) {
+  const normalizedRisk = String(
+    riskLevel || ""
+  ).toUpperCase();
 
   if (!["HIGH", "MEDIUM", "LOW"].includes(normalizedRisk)) {
-    throw new Error("Risk must be HIGH, MEDIUM or LOW.");
+    throw new Error(
+      "Risk must be HIGH, MEDIUM or LOW."
+    );
   }
 
-  return (data.students?.[normalizedRisk] || []).map((student) => ({
+  const data = await getTeacherAnalytics();
+
+  const students =
+    data?.students?.[normalizedRisk] || [];
+
+  return students.map((student) => ({
     student_id: student.student_id,
-    student_name: student.student_name,
-    risk_level: student.risk_level,
+
+    student_name:
+      student.student_name ||
+      student.name ||
+      "Unknown Student",
+
+    risk_level:
+      student.risk_level ||
+      normalizedRisk,
+
+    risk_score:
+      student.risk_score ?? 0,
+
+    performance_trend:
+      student.performance_trend ||
+      student.trend ||
+      "STABLE",
   }));
 }
 
-/**
- * Get details of one student.
- *
- * Backend:
- * GET /api/teacher/students/{student_id}
- */
+
+// =========================================================
+// GET ONE STUDENT DETAILS
+// =========================================================
+//
+// Backend:
+// GET /api/teacher/students/{student_id}
+//
+// IMPORTANT:
+// THIS is the only request that triggers AI analysis.
+//
+// So:
+// Analytics page  -> NO AI
+// Risk list       -> NO AI
+// Click Arjun     -> AI runs for Arjun only
+// Click Sneha     -> AI runs for Sneha only
+//
+
 export async function getStudentDetails(studentId) {
   if (!studentId) {
-    throw new Error("Student ID is required.");
+    throw new Error(
+      "Student ID is required."
+    );
   }
 
   const data = await apiGet(
     `/teacher/students/${encodeURIComponent(studentId)}`
   );
 
-  /*
-   * Normalize intervention so React never receives
-   * an unexpected object/string structure.
-   */
+  // =======================================================
+  // NORMALIZE INTERVENTION
+  // =======================================================
+
+  const rawIntervention =
+    data?.intervention;
+
+  const interventionReasons =
+    Array.isArray(
+      rawIntervention?.reasons
+    )
+      ? rawIntervention.reasons
+      : [];
+
+  const interventionRecommendation =
+    typeof rawIntervention?.recommendation ===
+      "string"
+      ? rawIntervention.recommendation.trim()
+      : "";
+
+
   const intervention = {
-    reasons: Array.isArray(data.intervention?.reasons)
-      ? data.intervention.reasons
-      : [],
+    reasons: interventionReasons,
 
     recommendation:
-      typeof data.intervention?.recommendation === "string"
-        ? data.intervention.recommendation
-        : "",
+      interventionRecommendation,
   };
 
-  /*
-   * Normalize AI analysis.
-   *
-   * If the AI returns an object, convert it to JSON text
-   * so React can safely render it.
-   */
-  let aiAnalysis = "AI analysis is currently unavailable.";
 
-  if (typeof data.ai_analysis === "string") {
-    aiAnalysis = data.ai_analysis;
-  } else if (data.ai_analysis) {
-    aiAnalysis = JSON.stringify(
-      data.ai_analysis,
-      null,
-      2
-    );
+  // =======================================================
+  // NORMALIZE AI SUGGESTION
+  // =======================================================
+  //
+  // Your backend currently returns:
+  //
+  // "ai_analysis":
+  // "Implement a structured study plan..."
+  //
+  // Therefore we MUST preserve that string.
+  //
+  // We also support an object response in case the
+  // backend is changed later.
+  //
+
+  let aiSuggestion = "";
+
+  if (
+    typeof data?.ai_analysis ===
+    "string"
+  ) {
+    aiSuggestion =
+      data.ai_analysis.trim();
   }
 
+  else if (
+    data?.ai_analysis &&
+    typeof data.ai_analysis ===
+    "object"
+  ) {
+    aiSuggestion =
+      data.ai_analysis.recommendation ||
+      data.ai_analysis.suggestion ||
+      "";
+  }
+
+
+  // =======================================================
+  // FALLBACK
+  // =======================================================
+
+  if (!aiSuggestion) {
+    aiSuggestion =
+      "AI analysis is currently unavailable.";
+  }
+
+
+  // =======================================================
+  // FINAL NORMALIZED RESPONSE
+  // =======================================================
+  //
+  // Both ai_analysis and ai_suggestion are returned.
+  //
+  // This makes the frontend compatible with either:
+  //
+  // student.ai_analysis
+  //
+  // OR
+  //
+  // student.ai_suggestion
+  //
+
   return {
-    student_id: data.student_id,
-    student_name: data.student_name,
-    risk_level: data.risk_level,
+    student_id:
+      data.student_id,
+
+    student_name:
+      data.student_name ||
+      "Unknown Student",
+
+    risk_level:
+      data.risk_level ||
+      "LOW",
 
     performance_trend:
-      data.performance_trend || "STABLE",
+      data.performance_trend ||
+      "STABLE",
 
     intervention,
 
-    ai_analysis: aiAnalysis,
+    // Existing StudentDetail.jsx uses this
+    ai_analysis:
+      aiSuggestion,
+
+    // Explicit name for future use
+    ai_suggestion:
+      aiSuggestion,
   };
 }
 
-/**
- * Clear cached analytics.
- */
+
+// =========================================================
+// CLEAR ANALYTICS CACHE
+// =========================================================
+//
+// Call this after changing/re-uploading the CSV or
+// whenever fresh risk calculations are required.
+//
+
 export function clearTeacherAnalyticsCache() {
   analyticsCache = null;
+}
+
+
+// =========================================================
+// OPTIONAL: FORCE REFRESH ANALYTICS
+// =========================================================
+//
+// Useful after modifying the dataset.
+//
+
+export async function refreshTeacherAnalytics() {
+  analyticsCache = null;
+
+  return getTeacherAnalytics();
 }

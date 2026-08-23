@@ -42,7 +42,7 @@ Analyze ONLY the VERIFIED student data provided below.
 The backend risk engine has already calculated the final
 risk score, risk level and performance trend.
 
-You must NOT change those values.
+You MUST NOT change those values.
 
 =========================================================
 STUDENT
@@ -102,13 +102,14 @@ RULES
 
 7. Do not make claims about personal circumstances.
 
-8. Do not use words such as critical, severe or urgent.
+8. Do not use words such as:
+   critical, severe, urgent.
 
-9. Every student MUST receive an AI Intervention.
+9. EVERY student MUST receive an AI Intervention.
 
-10. LOW-risk students MUST also receive an intervention.
+10. LOW-risk students MUST receive an intervention.
     For LOW-risk students, make it preventive and focused
-    on maintaining/improving current performance.
+    on maintaining or improving their current performance.
 
 11. MEDIUM-risk students MUST receive an intervention.
 
@@ -128,17 +129,21 @@ Return EXACTLY these sections:
 
 Analysis:
 Write 50–70 words explaining the student's academic
-situation using the supplied data.
+situation using ONLY the supplied data.
 
 AI Intervention:
-Write EXACTLY TWO short lines.
-Each line should be a practical faculty intervention.
+Write EXACTLY TWO short lines,use the data to give reference .
+
+Each line must describe a practical action that faculty
+can take.
+
 Do NOT write a paragraph.
-Do NOT include a recommendation heading.
+
+Do NOT include the word "Recommendation" here.
 
 AI Suggestion:
 Write EXACTLY ONE short practical recommendation for
-faculty based only on the supplied data.
+faculty based ONLY on the supplied data.
 
 Do not add any other sections.
 """
@@ -173,10 +178,6 @@ Do not add any other sections.
         return content.strip()
 
     except Exception as e:
-
-        # IMPORTANT:
-        # Never crash the complete analytics request because
-        # one AI call failed.
 
         return (
             "AI analysis unavailable.\n"
