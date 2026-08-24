@@ -5,6 +5,8 @@ import TeacherWelcome from "./pages/teachers-dash/TeacherWelcome";
 import TeacherAnalytics from './pages/teachers-dash/TeacherAnalytics';
 import StudentDashboard from "./pages/Student/StudentDashboard";
 import ParentDashboard from "./pages/Parent/ParentDashboard";
+import InterestPlus from "./pages/Student/InterestPlus";
+import InterestQuestions from "./pages/Student/InterestQuestions"; 
 
 /**
  * App.jsx only defines routes — no page content lives here.
@@ -16,11 +18,29 @@ function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
-
         {/* Placeholder routes only — dashboards are built in a future task */}
+
+        {/* Teacher routes */}
         <Route path="/teacher/dashboard" element={<TeacherWelcome />} />
         <Route path="/teacher/analytics" element={<TeacherAnalytics />} />
+
+        {/* Student routes */}
         <Route path="/student/dashboard" element={<StudentDashboard />} />
+        <Route path="/student/interest" element={<InterestPlus />} />
+        <Route
+          path="/student/interest/questions"
+          element={<InterestQuestions />}
+        />
+        <Route
+          path="/student/interest/result"
+          element={
+            <div style={{ padding: "40px", color: "white" }}>
+              Interest analysis will appear here.
+            </div>
+          }
+        />
+
+        {/* Parent routes */}
         <Route path="/parent/dashboard" element={<ParentDashboard />} />
       </Routes>
     </BrowserRouter>
