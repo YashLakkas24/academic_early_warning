@@ -2,6 +2,8 @@ import pandas as pd
 
 from .validator import validate_data
 from .risk_calculator import calculate_risk
+from .explainability import generate_explanation
+from .ai_analysis import generate_ai_analysis
 
 
 def analyze_student(student):
@@ -15,6 +17,16 @@ def analyze_dataset(df):
 
     for _, student in df.iterrows():
         result = analyze_student(student)
+
+        explanation = generate_explanation(
+            student, result["trend"], result["risk_level"]
+        )
+
+        result["explanation"] = explanation
+        
+        ai_analysis = generate_ai_analysis(student, result)
+
+        result["ai_analysis"] = ai_analysis
 
         result["student_id"] = student["student_id"]
         result["name"] = student["name"]
