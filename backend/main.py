@@ -8,6 +8,7 @@ from routes.teacher import router as teacher_router
 from routes.student import router as student_router
 from routes.interest import router as interest_router
 from routes.interest_options import router as interest_options_router
+from routes.ai_interest import router as ai_interest_router
 app = FastAPI()
 
 
@@ -30,6 +31,7 @@ app.include_router(auth_router)
 app.include_router(teacher_router)
 app.include_router(interest_router)
 app.include_router(interest_options_router)
+app.include_router(ai_interest_router)
 # Student routes
 app.include_router(student_router)
 

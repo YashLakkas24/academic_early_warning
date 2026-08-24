@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-
+from models import StudentInterest, QuizAnswer
 from database import SessionLocal
-from models import StudentInterest
 
 
 router = APIRouter(
@@ -81,4 +80,36 @@ def add_interest(
         "student_id": student_id,
         "interest": new_interest.interest,
         "status": new_interest.status
+    }
+class AnswerRequest(BaseModel):
+    interest: str
+    question: str
+    answer: str
+    question_order: int
+
+
+@router.post("/{student_id}/interest-session/answer")
+def save_answer(
+    student_id: str,
+    answer_data: AnswerRequest,
+    db: Session = Depends(get_db)
+):
+
+    new_answer = QuizAnswer(
+        student_id=student_id,
+        interest=answer_data.interest,
+        question=answer_data.question,
+        answer=answer_data.answer,
+        question_order=answer_data.question_order
+    )
+
+    db.add(new_answer)
+    db.commit()
+    db.refresh(new_answer)
+
+    return {
+        "message": "Answer saved successfully",
+        "student_id": student_id,
+        "interest": answer_data.interest,
+        "question_order": answer_data.question_order
     }
