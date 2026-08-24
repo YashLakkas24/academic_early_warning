@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Float
 from database import Base
 
 
@@ -28,8 +28,6 @@ class User(Base):
         String,
         nullable=False
     )
-
-
 class Student(Base):
     __tablename__ = "students"
 
@@ -42,27 +40,150 @@ class Student(Base):
         index=True
     )
 
-    roll_number = Column(
-        String,
-        nullable=False
-    )
-
     name = Column(
         String,
         nullable=False
     )
 
-    education_level = Column(
+    roll_number = Column(
         String,
         nullable=False
     )
 
-    class_name = Column(
+    attendance = Column(
+        Integer,
+        nullable=False
+    )
+
+    previous_sem_cgpa = Column(
+        Float,
+        nullable=False
+    )
+
+    extracurricular_count = Column(
+        Integer,
+        nullable=False
+    )
+class StudentInterest(Base):
+    __tablename__ = "student_interests"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    student_id = Column(
+        String,
+        nullable=False,
+        index=True
+    )
+
+    interest = Column(
+        String,
+        nullable=False
+    )
+
+    status = Column(
+        String,
+        nullable=False,
+        default="active"
+    )
+class QuizAnswer(Base):
+    __tablename__ = "quiz_answers"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    student_id = Column(
+        String,
+        nullable=False,
+        index=True
+    )
+
+    interest = Column(
+        String,
+        nullable=False
+    )
+
+    question = Column(
+        String,
+        nullable=False
+    )
+
+    answer = Column(
+        String,
+        nullable=False
+    )
+
+    question_order = Column(
+        Integer,
+        nullable=False
+    )
+class InterestAnalysis(Base):
+    __tablename__ = "interest_analysis"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    student_id = Column(
+        String,
+        nullable=False,
+        index=True
+    )
+
+    interest = Column(
+        String,
+        nullable=False
+    )
+
+    interest_score = Column(
+        Float,
+        nullable=True
+    )
+
+    capability_score = Column(
+        Float,
+        nullable=True
+    )
+
+    experience_level = Column(
         String,
         nullable=True
     )
 
-    division = Column(
+    analysis = Column(
         String,
         nullable=True
+    )
+
+
+    __tablename__ = "interest_questions"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    interest = Column(
+        String,
+        nullable=False,
+        index=True
+    )
+
+    question = Column(
+        String,
+        nullable=False
+    )
+
+    question_order = Column(
+        Integer,
+        nullable=False
     )
