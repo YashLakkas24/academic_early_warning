@@ -7,6 +7,7 @@ import StudentDashboard from "./pages/Student/StudentDashboard";
 import ParentDashboard from "./pages/Parent/ParentDashboard";
 import InterestPlus from "./pages/Student/InterestPlus";
 import InterestQuestions from "./pages/Student/InterestQuestions";
+import InterestResult from "./pages/Student/InterestResult";
 
 function App() {
   return (
@@ -26,14 +27,7 @@ function App() {
           path="/student/interest/questions"
           element={<InterestQuestions />}
         />
-        <Route
-          path="/student/interest/result"
-          element={
-            <div style={{ padding: "40px", color: "white" }}>
-              Interest analysis will appear here.
-            </div>
-          }
-        />
+        <Route path="/student/interest/result" element={<InterestResult />} />
 
         {/* Parent routes */}
         <Route path="/parent/dashboard" element={<ParentDashboard />} />
