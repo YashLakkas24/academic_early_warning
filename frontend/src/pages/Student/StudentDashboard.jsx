@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; 
+import { getStudentProfile } from "../../services/studentService"; 
 
 import {
   LayoutDashboard,
@@ -20,17 +21,46 @@ import "./StudentDashboard.css";
 function StudentDashboard() {
   const navigate = useNavigate();
   const [activePage, setActivePage] = useState("dashboard");
+  const [studentData, setStudentData] = useState(null);
 
-  // Temporary data.
-  // Later this will come from FastAPI + PostgreSQL.
+  const savedUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "{}");
+    } catch {
+      return {};
+    }
+  })();
+
+  const studentId = savedUser.user_id || "STU001";
+
+  useEffect(() => {
+    let isMounted = true;
+    getStudentProfile(studentId)
+      .then((data) => {
+        if (isMounted) {
+          setStudentData(data);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setStudentData(null);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [studentId]);
+
   const student = {
-    name: "Aarav Sharma",
-    studentId: "STU001",
+    name: studentData?.name || savedUser.full_name || "Aarav Sharma",
+    studentId: studentData?.student_id || studentId,
+    rollNumber: studentData?.roll_number || "01",
     branch: "AIDS",
     year: "3rd Year",
-    attendance: 92,
-    previousCgpa: 8.4,
-    extracurricular: 3,
+    attendance: studentData?.attendance ?? 92,
+    previousCgpa: studentData?.previous_sem_cgpa ?? 8.4,
+    extracurricular: studentData?.extracurricular_count ?? 3,
   };
 
   const menuItems = [
@@ -114,7 +144,10 @@ function StudentDashboard() {
         <div className="student-sidebar-bottom">
           <button
             className="student-nav-item logout-item"
-            onClick={() => (window.location.href = "/login")}
+            onClick={() => {
+              localStorage.removeItem("user");
+              navigate("/login");
+            }}
           >
             <LogOut size={19} />
             <span>Logout</span>
@@ -156,7 +189,7 @@ function StudentDashboard() {
             <h2>{student.name}</h2>
 
             <p>
-              {student.studentId} · {student.branch} · {student.year}
+              {student.studentId} · Roll {student.rollNumber} · {student.branch} · {student.year}
             </p>
           </div>
 
