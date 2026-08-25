@@ -19,51 +19,7 @@ def analyze_interest(
     previous_interests = previous_interests or []
 
     # --------------------------------------------------------
-    # 1. Find answers needed for deterministic scoring
-    # --------------------------------------------------------
-
-    interest_answer = None
-    confidence_answer = None
-    experience_answer = None
-
-    for answer in answers:
-        question_id = answer.get("question_id")
-
-        if question_id == "interest_level":
-            interest_answer = answer.get("answer")
-
-        elif question_id == "confidence":
-            confidence_answer = answer.get("answer")
-
-        elif question_id == "experience":
-            experience_answer = answer.get("answer")
-
-    # --------------------------------------------------------
-    # 2. Calculate objective scores using Python
-    # --------------------------------------------------------
-
-    if interest_answer is None:
-        raise ValueError("Missing interest_level answer.")
-
-    if confidence_answer is None:
-        raise ValueError("Missing confidence answer.")
-
-    if experience_answer is None:
-        raise ValueError("Missing experience answer.")
-
-    # Convert "5/5" → 5
-    interest_value = int(str(interest_answer).split("/")[0])
-    confidence_value = int(str(confidence_answer).split("/")[0])
-
-    interest_score = scale_1_to_5(interest_value)
-    confidence_score = scale_1_to_5(confidence_value)
-
-    experience_score = calculate_experience_score(
-        str(experience_answer)
-    )
-
-    # --------------------------------------------------------
-    # 3. Ask Qwen for qualitative analysis
+    # 1. Send the COMPLETE adaptive conversation to the LLM
     # --------------------------------------------------------
 
     user_prompt = f"""
@@ -72,7 +28,7 @@ Analyze the following student's interest.
 Interest:
 {interest}
 
-Answers:
+Adaptive Questions and Answers:
 {answers}
 
 Existing skills:
@@ -83,43 +39,53 @@ Previous interests:
 
 IMPORTANT:
 
-The following scores have already been calculated
-deterministically by the application:
+The questions were generated dynamically by an adaptive
+question-generation system.
 
-interest_score = {interest_score}
+Therefore, DO NOT assume that specific question IDs such as
+"interest_level", "confidence", or "experience" exist.
 
-confidence_score = {confidence_score}
+Use the actual questions and answers provided above.
 
-experience_score = {experience_score}
+Your analysis must be based only on the information available
+in the student's responses and profile.
 
-Do NOT change these scores.
+Analyze:
 
-Use the student's answers and profile to analyze:
-
+- interest strength
+- confidence
+- practical experience
+- current capability
 - strengths
 - skill gaps
 - potential directions
 - next steps
 - evidence
 - summary
-- capability_score
 
-Capability should be based only on the evidence provided.
-Do not assume capability from interest alone.
+IMPORTANT DISTINCTION:
+
+Interest is NOT the same as capability.
+
+A student may have very high interest but low experience
+or confidence. This should be treated as a development
+opportunity, not as evidence that the student is unsuitable.
+
+Do not invent information that is not present in the input.
 """
+
+    # --------------------------------------------------------
+    # 2. Ask Qwen for qualitative analysis
+    # --------------------------------------------------------
 
     result = generate_interest_analysis(
         system_prompt=INTEREST_ANALYSIS_SYSTEM_PROMPT,
         user_prompt=user_prompt,
-        thinking=False
+        thinking=False,
     )
 
     # --------------------------------------------------------
-    # 4. Override Qwen's scores with our deterministic scores
+    # 3. Return validated AI analysis
     # --------------------------------------------------------
-
-    result.interest_score = interest_score
-    result.confidence_score = confidence_score
-    result.experience_score = experience_score
 
     return result

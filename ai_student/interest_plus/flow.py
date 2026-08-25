@@ -1,6 +1,10 @@
 from ai_student.quiz.schemas import QuizSession, QuizAnswer
-from ai_student.quiz.adaptive_logic import choose_next_question
-from ai_student.interest_analysis.pipeline import run_interest_pipeline
+
+from ai_student.llm.service import generate_next_question
+
+from ai_student.interest_analysis.pipeline import (
+    run_interest_pipeline,
+)
 
 
 class InterestPlusFlow:
@@ -18,58 +22,84 @@ class InterestPlusFlow:
         self.existing_skills = existing_skills or []
         self.previous_interests = previous_interests or []
 
+    # ========================================================
+    # GET NEXT QUESTION
+    # ========================================================
+
     def get_next_question(self):
         """
-        Return the next question based on the answers collected so far.
+        Ask the LLM to generate the next question based on
+        the selected interest and all previous answers.
         """
 
-        answers = {
-            answer.question_id: answer.answer
+        conversation = [
+            {
+                "question_id": answer.question_id,
+                "question": answer.question,
+                "answer": answer.answer,
+            }
             for answer in self.session.answers
-        }
+        ]
 
-        question_id = choose_next_question(answers)
+        generated_question = generate_next_question(
+            interest=self.session.interest,
+            conversation=conversation,
+            existing_skills=self.existing_skills,
+            previous_interests=self.previous_interests,
+        )
 
-        if question_id is None:
+        # ----------------------------------------------------
+        # Quiz completed
+        # ----------------------------------------------------
+
+        if generated_question is None:
+
             self.session.completed = True
+
             return None
 
-        return question_id
+        # ----------------------------------------------------
+        # Return generated question
+        # ----------------------------------------------------
+
+        return generated_question
+
+    # ========================================================
+    # SUBMIT ANSWER
+    # ========================================================
 
     def submit_answer(
         self,
         question_id: str,
         question: str,
-        answer
+        answer,
     ):
         """
-        Save the student's answer and continue the Interest+ flow.
-
-        If the quiz is complete, automatically run the
-        interest analysis pipeline.
+        Save the student's answer and generate the
+        next adaptive question.
         """
 
-        # ---------------------------------------------
+        # ----------------------------------------------------
         # 1. Save answer
-        # ---------------------------------------------
+        # ----------------------------------------------------
 
         self.session.answers.append(
             QuizAnswer(
                 question_id=question_id,
                 question=question,
-                answer=answer
+                answer=answer,
             )
         )
 
-        # ---------------------------------------------
-        # 2. Check what question comes next
-        # ---------------------------------------------
+        # ----------------------------------------------------
+        # 2. Generate next question
+        # ----------------------------------------------------
 
         next_question = self.get_next_question()
 
-        # ---------------------------------------------
+        # ----------------------------------------------------
         # 3. Quiz completed
-        # ---------------------------------------------
+        # ----------------------------------------------------
 
         if next_question is None:
 
@@ -84,15 +114,15 @@ class InterestPlusFlow:
             return {
                 "completed": True,
                 "next_question": None,
-                "result": result,
+                "result": result.model_dump(),
             }
 
-        # ---------------------------------------------
+        # ----------------------------------------------------
         # 4. Quiz continues
-        # ---------------------------------------------
+        # ----------------------------------------------------
 
         return {
             "completed": False,
-            "next_question": next_question,
+            "next_question": next_question.model_dump(),
             "result": None,
         }

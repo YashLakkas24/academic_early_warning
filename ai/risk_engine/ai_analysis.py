@@ -20,7 +20,7 @@ load_dotenv(ENV_PATH)
 # AI CLIENT
 # =========================================================
 
-api_key = os.getenv("OPENAI_API_KEY")
+api_key = os.getenv("AI_KEY")
 
 client = OpenAI(
     base_url="https://ai.tcetcercd.in/v1",

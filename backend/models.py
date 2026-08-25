@@ -108,6 +108,10 @@ class QuizAnswer(Base):
         String,
         nullable=False
     )
+    question_id = Column(
+        String,
+        nullable=False
+    )
 
     question = Column(
         String,
