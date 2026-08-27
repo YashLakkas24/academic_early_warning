@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
@@ -6,9 +7,10 @@ import {
   Mic,
   Puzzle,
   Target,
-  TrendingUp,
   CheckCircle2,
 } from "lucide-react";
+
+import { getStudentInterestAnalysis } from "../../services/studentService";
 
 import "./InterestResult.css";
 
@@ -16,125 +18,144 @@ function InterestResult() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const initialAnalysis = location.state?.analysis || null;
+  const [analysisData, setAnalysisData] = useState(initialAnalysis);
+  const [loading, setLoading] = useState(!initialAnalysis);
+  const [error, setError] = useState("");
+
   const selectedInterests = location.state?.selectedInterests || [
-    "public-speaking",
+    "Coding & Software",
   ];
 
-  const answers = location.state?.answers || {};
+  /*
+   * Get the currently logged-in student's ID.
+   */
+  const getStudentId = () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+      return user.student_id || user.user_id || "STU001";
+    } catch {
+      return "STU001";
+    }
+  };
 
   /*
-   * TEMPORARY ANALYSIS
-   *
-   * These values are intentionally calculated on the frontend
-   * only for the prototype.
-   *
-   * Later:
-   *
-   * Frontend → FastAPI → AI → FastAPI → Frontend
+   * Fetch the real Interest+ analysis from FastAPI.
    */
+  useEffect(() => {
+    const fetchAnalysis = async () => {
+      try {
+        if (!initialAnalysis) {
+          setLoading(true);
+        }
+        setError("");
 
-  const interestLevel = Number(answers["interest-level"] || 4);
-  const ability = Number(answers["ability"] || 2);
+        const studentId = getStudentId();
 
-  const interestScore = interestLevel * 20;
-  const capabilityScore = ability * 20;
+        if (!studentId) {
+          throw new Error(
+            "Student ID not found. Please login again."
+          );
+        }
 
-  const experienceAnswer = answers["experience"] || [];
+        const data = await getStudentInterestAnalysis(studentId);
 
-  const hasExperience =
-    Array.isArray(experienceAnswer) &&
-    experienceAnswer.length > 0 &&
-    !experienceAnswer.includes("none");
-
-  const experienceScore = hasExperience ? 60 : 20;
-
-  const primaryInterest = selectedInterests[0];
-
-  const interestName = primaryInterest
-    .replace("-", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
-
-  const getAnalysis = () => {
-    if (interestScore >= 80 && capabilityScore < 60) {
-      return `You show strong interest in ${interestName}, while your current capability is still developing. This is a good area to explore further through practical experiences.`;
-    }
-
-    if (interestScore >= 80 && capabilityScore >= 60) {
-      return `You show both strong interest and developing capability in ${interestName}. Continued practical experience could help you build this further.`;
-    }
-
-    if (interestScore < 60) {
-      return `Your responses suggest that ${interestName} is something you may want to explore further before deciding how strongly it fits you.`;
-    }
-
-    return `Your responses show a developing interest in ${interestName}. More practical exposure can help you understand whether you want to pursue it further.`;
-  };
-
-  const getSkillGaps = () => {
-    if (primaryInterest === "public-speaking") {
-      const gaps = [];
-
-      if (capabilityScore < 60) {
-        gaps.push("Public Speaking Confidence");
+        if (data.has_analysis && data.analyses?.length) {
+          setAnalysisData(data.analyses[0]);
+        } else if (!initialAnalysis) {
+          throw new Error(
+            "Interest analysis is not available yet. Please complete the Interest+ discovery quiz."
+          );
+        }
+      } catch (err) {
+        if (!initialAnalysis) {
+          setError(
+            err.message ||
+              "Failed to load interest analysis."
+          );
+        }
+      } finally {
+        setLoading(false);
       }
+    };
 
-      if (!hasExperience) {
-        gaps.push("Practical Speaking Experience");
-      }
+    fetchAnalysis();
+  }, [initialAnalysis]);
 
-      gaps.push("Audience Engagement");
-      gaps.push("Presentation Skills");
+  /*
+   * Loading state
+   */
+  if (loading) {
+    return (
+      <div className="interest-result-page">
+        <main className="result-main">
+          <section className="state-card">
+            <div className="analysis-icon">
+              <Sparkles size={21} />
+            </div>
 
-      return gaps.slice(0, 4);
-    }
+            <h2>Loading your Interest+ analysis...</h2>
 
-    return ["Practical Experience", "Communication", "Problem Solving"];
-  };
+            <p>
+              We're retrieving your personalized
+              analysis.
+            </p>
+          </section>
+        </main>
+      </div>
+    );
+  }
 
-  const getDirections = () => {
-    if (primaryInterest === "public-speaking") {
-      return [
-        {
-          icon: Mic,
-          title: "Event Hosting",
-          score: 91,
-        },
-        {
-          icon: Target,
-          title: "Public Relations",
-          score: 84,
-        },
-        {
-          icon: TrendingUp,
-          title: "Content Creation",
-          score: 78,
-        },
-      ];
-    }
+  /*
+   * Error state
+   */
+  if (error) {
+    return (
+      <div className="interest-result-page">
+        <main className="result-main">
+          <section className="state-card error">
+            <h2>Unable to load your analysis</h2>
 
-    return [
-      {
-        icon: Target,
-        title: "Explore this area further",
-        score: 82,
-      },
-      {
-        icon: TrendingUp,
-        title: "Build practical experience",
-        score: 76,
-      },
-    ];
-  };
+            <p>{error}</p>
 
-  const skillGaps = getSkillGaps();
-  const directions = getDirections();
+            <button
+              className="profile-button"
+              onClick={() =>
+                navigate("/student/dashboard")
+              }
+            >
+              Back to Dashboard
+            </button>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
+  const analysis = analysisData;
+
+  if (!analysis) {
+    return null;
+  }
+
+  const interestName =
+    analysis.interest || "Interest";
+
+  const skillGaps =
+    analysis.skill_gaps || [];
+
+  const directions =
+    analysis.potential_directions || [];
 
   return (
     <div className="interest-result-page">
       <header className="result-header">
         <button
           className="result-back"
-          onClick={() => navigate("/student/dashboard")}
+          onClick={() =>
+            navigate("/student/dashboard")
+          }
         >
           <ArrowLeft size={17} />
           Dashboard
@@ -155,7 +176,9 @@ function InterestResult() {
         {/* Heading */}
 
         <section className="result-intro">
-          <span className="result-eyebrow">YOUR INTEREST PROFILE</span>
+          <span className="result-eyebrow">
+            YOUR INTEREST PROFILE
+          </span>
 
           <h1>
             Here's what we learned
@@ -164,8 +187,9 @@ function InterestResult() {
           </h1>
 
           <p>
-            This isn't a final career decision. It's a snapshot of your current
-            interests, experience and areas worth exploring.
+            This isn't a final career decision. It's a
+            snapshot of your current interests,
+            experience and areas worth exploring.
           </p>
         </section>
 
@@ -184,49 +208,64 @@ function InterestResult() {
           </div>
 
           <div className="score-grid">
+            {/* Interest */}
+
             <div className="score-item">
               <div className="score-title">
                 <span>Interest</span>
-                <strong>{interestScore}%</strong>
+
+                <strong>
+                  {analysis.interest_score}%
+                </strong>
               </div>
 
               <div className="score-bar">
                 <div
                   className="score-fill"
                   style={{
-                    width: `${interestScore}%`,
+                    width: `${analysis.interest_score}%`,
                   }}
                 />
               </div>
             </div>
 
+            {/* Capability */}
+
             <div className="score-item">
               <div className="score-title">
                 <span>Current Capability</span>
-                <strong>{capabilityScore}%</strong>
+
+                <strong>
+                  {analysis.capability_score}%
+                </strong>
               </div>
 
               <div className="score-bar">
                 <div
                   className="score-fill capability"
                   style={{
-                    width: `${capabilityScore}%`,
+                    width: `${analysis.capability_score}%`,
                   }}
                 />
               </div>
             </div>
 
+            {/* Experience */}
+
             <div className="score-item">
               <div className="score-title">
                 <span>Experience</span>
-                <strong>{experienceScore}%</strong>
+
+                <strong>
+                  {analysis.experience_score}%
+                </strong>
               </div>
 
               <div className="score-bar">
                 <div
                   className="score-fill experience"
                   style={{
-                    width: `${experienceScore}%`,
+                    width: `${analysis.experience_score}%`,
                   }}
                 />
               </div>
@@ -242,9 +281,14 @@ function InterestResult() {
           </div>
 
           <div>
-            <span className="result-section-label">OUR ANALYSIS</span>
+            <span className="result-section-label">
+              OUR ANALYSIS
+            </span>
 
-            <p>{getAnalysis()}</p>
+            <p>
+              {analysis.analysis ||
+                analysis.summary}
+            </p>
           </div>
         </section>
 
@@ -266,12 +310,22 @@ function InterestResult() {
             </div>
 
             <div className="skill-list">
-              {skillGaps.map((skill) => (
-                <div className="skill-item" key={skill}>
-                  <span>{skill}</span>
-                  <ArrowRight size={15} />
-                </div>
-              ))}
+              {skillGaps.length > 0 ? (
+                skillGaps.map((skill) => (
+                  <div
+                    className="skill-item"
+                    key={skill}
+                  >
+                    <span>{skill}</span>
+
+                    <ArrowRight size={15} />
+                  </div>
+                ))
+              ) : (
+                <p>
+                  No specific skill gaps identified.
+                </p>
+              )}
             </div>
           </div>
 
@@ -290,34 +344,28 @@ function InterestResult() {
             </div>
 
             <div className="direction-list">
-              {directions.map((direction) => {
-                const Icon = direction.icon;
-
-                return (
-                  <div className="direction-item" key={direction.title}>
+              {directions.length > 0 ? (
+                directions.map((direction) => (
+                  <div
+                    className="direction-item"
+                    key={direction}
+                  >
                     <div className="direction-icon">
-                      <Icon size={17} />
+                      <Target size={17} />
                     </div>
 
                     <div className="direction-info">
-                      <strong>{direction.title}</strong>
-
-                      <div className="direction-score">
-                        <div>
-                          <div
-                            className="direction-score-fill"
-                            style={{
-                              width: `${direction.score}%`,
-                            }}
-                          />
-                        </div>
-
-                        <span>{direction.score}%</span>
-                      </div>
+                      <strong>
+                        {direction}
+                      </strong>
                     </div>
                   </div>
-                );
-              })}
+                ))
+              ) : (
+                <p>
+                  No potential directions available.
+                </p>
+              )}
             </div>
           </div>
         </section>
@@ -326,19 +374,26 @@ function InterestResult() {
 
         <section className="result-footer-card">
           <div>
-            <span className="result-section-label">WHAT'S NEXT?</span>
+            <span className="result-section-label">
+              WHAT'S NEXT?
+            </span>
 
-            <h2>Your interest profile can evolve.</h2>
+            <h2>
+              Your interest profile can evolve.
+            </h2>
 
             <p>
-              Explore opportunities, identify skill gaps and update your
-              interests as you gain new experiences.
+              Explore opportunities, identify skill
+              gaps and update your interests as you
+              gain new experiences.
             </p>
           </div>
 
           <button
             className="profile-button"
-            onClick={() => navigate("/student/dashboard")}
+            onClick={() =>
+              navigate("/student/dashboard")
+            }
           >
             Go to Dashboard
             <ArrowRight size={17} />

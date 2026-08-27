@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; 
-import { getStudentProfile } from "../../services/studentService"; 
+import {
+  getStudentProfile,
+  getStudentInterestAnalysis,
+} from "../../services/studentService"; 
 
 import {
   LayoutDashboard,
@@ -14,6 +17,7 @@ import {
   CalendarCheck,
   Award,
   ChevronRight,
+  CheckCircle2,
 } from "lucide-react";
 
 import "./StudentDashboard.css";
@@ -22,6 +26,7 @@ function StudentDashboard() {
   const navigate = useNavigate();
   const [activePage, setActivePage] = useState("dashboard");
   const [studentData, setStudentData] = useState(null);
+  const [interestAnalysis, setInterestAnalysis] = useState(null);
 
   const savedUser = (() => {
     try {
@@ -31,10 +36,11 @@ function StudentDashboard() {
     }
   })();
 
-  const studentId = savedUser.user_id || "STU001";
+  const studentId = savedUser.student_id || savedUser.user_id || "STU001";
 
   useEffect(() => {
     let isMounted = true;
+
     getStudentProfile(studentId)
       .then((data) => {
         if (isMounted) {
@@ -44,6 +50,18 @@ function StudentDashboard() {
       .catch(() => {
         if (isMounted) {
           setStudentData(null);
+        }
+      });
+
+    getStudentInterestAnalysis(studentId)
+      .then((data) => {
+        if (isMounted && data.has_analysis && data.analyses?.length) {
+          setInterestAnalysis(data.analyses[0]);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setInterestAnalysis(null);
         }
       });
 
@@ -255,23 +273,50 @@ function StudentDashboard() {
             </div>
 
             <div>
-              <span className="section-label">AI-POWERED DISCOVERY</span>
+              <span className="section-label">
+                {interestAnalysis ? "AI PROFILE READY" : "AI-POWERED DISCOVERY"}
+              </span>
 
-              <h2>Interest+</h2>
+              <h2>
+                {interestAnalysis
+                  ? `Interest Profile: ${interestAnalysis.interest}`
+                  : "Interest+"}
+              </h2>
 
               <p>
-                Discover what genuinely interests you through adaptive
-                questions. Your responses help us understand your interests,
-                experience and areas worth exploring.
+                {interestAnalysis?.summary ||
+                  "Discover what genuinely interests you through adaptive questions. Your responses help us understand your interests, experience and areas worth exploring."}
               </p>
 
-              <button
-                className="primary-action"
-                onClick={() => navigate("/student/interest")}
-              >
-                Start Interest Discovery
-                <ChevronRight size={17} />
-              </button>
+              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "12px" }}>
+                {interestAnalysis ? (
+                  <>
+                    <button
+                      className="primary-action"
+                      onClick={() => navigate("/student/interest/result")}
+                    >
+                      View Full Analysis
+                      <ChevronRight size={17} />
+                    </button>
+                    <button
+                      className="primary-action"
+                      style={{ background: "rgba(255, 255, 255, 0.08)", border: "1px solid rgba(255, 255, 255, 0.15)" }}
+                      onClick={() => navigate("/student/interest")}
+                    >
+                      Explore New Interest
+                      <ChevronRight size={17} />
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    className="primary-action"
+                    onClick={() => navigate("/student/interest")}
+                  >
+                    Start Interest Discovery
+                    <ChevronRight size={17} />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

@@ -14,6 +14,7 @@ import {
   Users,
 } from "lucide-react";
 
+import { saveStudentInterest } from "../../services/studentService";
 import "./InterestPlus.css";
 
 const interests = [
@@ -82,18 +83,26 @@ function InterestPlus() {
     });
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (selectedInterests.length === 0) {
       return;
     }
 
-    // Temporary for now.
-    // Later this data will be sent to FastAPI.
-    console.log("Selected interests:", selectedInterests);
+    const selectedObj = interests.find((item) => item.id === selectedInterests[0]);
+    const primaryTitle = selectedObj?.title || selectedInterests[0];
+
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const studentId = user.student_id || user.user_id || "STU001";
+      await saveStudentInterest(studentId, primaryTitle);
+    } catch (err) {
+      console.warn("Failed to persist interest immediately, continuing:", err);
+    }
 
     navigate("/student/interest/questions", {
       state: {
         selectedInterests,
+        primaryInterest: primaryTitle,
       },
     });
   };
