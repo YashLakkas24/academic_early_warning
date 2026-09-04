@@ -11,26 +11,27 @@ from dotenv import load_dotenv
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-ENV_PATH = PROJECT_ROOT / "backend" / ".env"
+ENV_PATH = PROJECT_ROOT / ".env"
 
-load_dotenv(ENV_PATH)
+load_dotenv(dotenv_path=ENV_PATH, override=True)
 
 
 # =========================================================
-# AI CLIENT
+# AI CLIENT — GOOGLE GEMINI
 # =========================================================
 
-api_key = os.getenv("AI_KEY")
+api_key = os.getenv("GEMINI_API_KEY")
 
 client = OpenAI(
-    base_url="https://ai.tcetcercd.in/v1",
-    api_key=api_key
+    api_key=api_key,
+    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
 )
 
 
 # =========================================================
 # AI ANALYSIS
 # =========================================================
+
 
 def generate_ai_analysis(student, risk_result):
 
@@ -132,7 +133,7 @@ Write 50–70 words explaining the student's academic
 situation using ONLY the supplied data.
 
 AI Intervention:
-Write EXACTLY TWO short lines,use the data to give reference .
+Write EXACTLY TWO short lines, use the data to give reference.
 
 Each line must describe a practical action that faculty
 can take.
@@ -150,22 +151,35 @@ Do not add any other sections.
 
     try:
 
+        # -------------------------------------------------
+        # CHECK API KEY
+        # -------------------------------------------------
+
         if not api_key:
             return (
                 "AI analysis unavailable: "
-                "OPENAI_API_KEY environment variable is not set."
+                "GEMINI_API_KEY environment variable is not set."
             )
 
+        # -------------------------------------------------
+        # GEMINI API REQUEST
+        # -------------------------------------------------
+
         response = client.chat.completions.create(
-            model="qwen3.6",
+            model="gemini-3.8-flash",
             messages=[
                 {
                     "role": "user",
-                    "content": prompt
+                    "content": prompt,
                 }
             ],
             temperature=0.2,
+            timeout=30.0,
         )
+
+        # -------------------------------------------------
+        # EXTRACT RESPONSE
+        # -------------------------------------------------
 
         content = response.choices[0].message.content
 
@@ -183,3 +197,54 @@ Do not add any other sections.
             "AI analysis unavailable.\n"
             f"AI error: {str(e)}"
         )
+
+
+# =========================================================
+# GEMINI CONNECTION TEST
+# =========================================================
+
+if __name__ == "__main__":
+
+    print("Gemini API key loaded:", bool(api_key))
+    print("Testing Gemini API...")
+
+    if not api_key:
+        print("ERROR: GEMINI_API_KEY is not set in .env")
+
+    else:
+
+        try:
+
+            response = client.chat.completions.create(
+                model="gemini-3.8-flash",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are an AI career guidance assistant."
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": (
+                            "Analyze this student's interests."
+                        ),
+                    },
+                ],
+                temperature=0.2,
+                timeout=30.0,
+            )
+
+            content = response.choices[0].message.content
+
+            print("\nGemini responded successfully:")
+            print("----------------------------------------")
+            print(content)
+            print("----------------------------------------")
+            print("Gemini API connection successful.")
+
+        except Exception as e:
+
+            print("\nRequest failed:")
+            print("Error type:", type(e).__name__)
+            print("Error:", str(e))
