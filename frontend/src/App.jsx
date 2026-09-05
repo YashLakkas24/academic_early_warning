@@ -8,6 +8,8 @@ import ParentDashboard from "./pages/Parent/ParentDashboard";
 import InterestPlus from "./pages/Student/InterestPlus";
 import InterestQuestions from "./pages/Student/InterestQuestions";
 import InterestResult from "./pages/Student/InterestResult";
+import SkillGap from "./pages/Student/SkillGap";
+import StudentRoadmap from "./pages/Student/StudentRoadmap";
 
 function App() {
   return (
@@ -28,6 +30,9 @@ function App() {
           element={<InterestQuestions />}
         />
         <Route path="/student/interest/result" element={<InterestResult />} />
+        <Route path="/student/skills" element={<SkillGap />} />
+        <Route path="/student/skill-gap" element={<SkillGap />} />
+        <Route path="/student/roadmap" element={<StudentRoadmap />} />
 
         {/* Parent routes */}
         <Route path="/parent/dashboard" element={<ParentDashboard />} />

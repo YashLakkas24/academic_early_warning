@@ -236,3 +236,122 @@ export async function getStudentInterestAnalysis(studentId) {
 
   return await response.json();
 }
+
+/**
+ * Fetch AI-discovered career directions for the student:
+ * GET /api/students/{student_id}/career-directions
+ */
+export async function getStudentCareerDirections(studentId) {
+  const cleanId = (studentId || "").trim().toUpperCase();
+  if (!cleanId) throw new Error("Student ID is required.");
+
+  const response = await fetch(
+    `${API_BASE_URL}/students/${encodeURIComponent(cleanId)}/career-directions`,
+    {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to fetch career directions (${response.status}): ${errorText}`);
+  }
+
+  return await response.json();
+}
+
+/**
+ * Fetch Skill Gap Analysis for the student:
+ * GET /api/students/{student_id}/skill-gap
+ */
+export async function getStudentSkillGap(studentId, direction = null, forceRefresh = false) {
+  const cleanId = (studentId || "").trim().toUpperCase();
+  if (!cleanId) throw new Error("Student ID is required.");
+
+  const queryParams = new URLSearchParams();
+  if (direction) queryParams.append("direction", direction);
+  if (forceRefresh) queryParams.append("force_refresh", "true");
+
+  const url = `${API_BASE_URL}/students/${encodeURIComponent(cleanId)}/skill-gap${
+    queryParams.toString() ? `?${queryParams.toString()}` : ""
+  }`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to fetch skill gap analysis (${response.status}): ${errorText}`);
+  }
+
+  return await response.json();
+}
+
+/**
+ * Fetch personalized AI Roadmap for the student:
+ * GET /api/students/{student_id}/roadmap
+ */
+export async function getStudentRoadmap(studentId, direction = null, forceRefresh = false) {
+  const cleanId = (studentId || "").trim().toUpperCase();
+  if (!cleanId) throw new Error("Student ID is required.");
+
+  const queryParams = new URLSearchParams();
+  if (direction) queryParams.append("direction", direction);
+  if (forceRefresh) queryParams.append("force_refresh", "true");
+
+  const url = `${API_BASE_URL}/students/${encodeURIComponent(cleanId)}/roadmap${
+    queryParams.toString() ? `?${queryParams.toString()}` : ""
+  }`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to fetch student roadmap (${response.status}): ${errorText}`);
+  }
+
+  return await response.json();
+}
+
+/**
+ * Trigger explicit Career Pivot analysis for a specific direction:
+ * POST /api/students/{student_id}/career-pivot/analyze
+ */
+export async function analyzeCareerDirection(studentId, direction, forceRefresh = true) {
+  const cleanId = (studentId || "").trim().toUpperCase();
+  if (!cleanId) throw new Error("Student ID is required.");
+
+  const response = await fetch(
+    `${API_BASE_URL}/students/${encodeURIComponent(cleanId)}/career-pivot/analyze`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        direction,
+        force_refresh: forceRefresh,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to analyze career direction (${response.status}): ${errorText}`);
+  }
+
+  return await response.json();
+}

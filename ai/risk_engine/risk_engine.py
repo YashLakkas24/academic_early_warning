@@ -34,6 +34,7 @@ def analyze_student(student):
 
     return result
 
+
 def analyze_dataset(df):
 
     # -----------------------------------------------------

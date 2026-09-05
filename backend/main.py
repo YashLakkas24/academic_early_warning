@@ -21,6 +21,7 @@ from models import (
     StudentInterest,
     QuizAnswer,
     InterestAnalysis,
+    CareerPivotAnalysis,
 )
 
 from routes.auth import router as auth_router

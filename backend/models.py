@@ -275,3 +275,77 @@ class InterestAnalysis(Base):
         Text,
         nullable=True
     )
+
+
+# ============================================================
+# CAREER PIVOT / SKILL GAP & ROADMAP ANALYSIS
+# ============================================================
+
+class CareerPivotAnalysis(Base):
+    __tablename__ = "career_pivot_analyses"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    student_id = Column(
+        String,
+        nullable=False,
+        index=True
+    )
+
+    interest = Column(
+        String,
+        nullable=False,
+        index=True
+    )
+
+    direction = Column(
+        String,
+        nullable=False,
+        index=True
+    )
+
+    # Industry required skills for this direction (JSON)
+    required_skills = Column(
+        Text,
+        nullable=True
+    )
+
+    # Student skill assessments (JSON)
+    skill_assessments = Column(
+        Text,
+        nullable=True
+    )
+
+    # Transferable skills identified (JSON)
+    transferable_skills = Column(
+        Text,
+        nullable=True
+    )
+
+    # Skill gaps (JSON)
+    skill_gaps = Column(
+        Text,
+        nullable=True
+    )
+
+    # Transition difficulty: low, moderate, high
+    transition_difficulty = Column(
+        String,
+        nullable=True
+    )
+
+    # Transition rationale / explanation
+    transition_reason = Column(
+        Text,
+        nullable=True
+    )
+
+    # Step-by-step personalized learning roadmap (JSON)
+    roadmap = Column(
+        Text,
+        nullable=True
+    )

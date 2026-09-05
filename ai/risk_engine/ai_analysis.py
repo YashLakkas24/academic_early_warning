@@ -20,12 +20,13 @@ load_dotenv(ENV_PATH)
 # AI CLIENT
 # =========================================================
 
-api_key = os.getenv("AI_KEY")
+api_key = os.getenv("GEMINI_API_KEY") or os.getenv("AI_KEY") or os.getenv("OPENAI_API_KEY")
+base_url = os.getenv("AI_BASE_URL") or "https://ai.tcetcercd.in/v1"
 
 client = OpenAI(
-    base_url="https://ai.tcetcercd.in/v1",
+    base_url=base_url,
     api_key=api_key
-)
+) if api_key else None
 
 
 # =========================================================
@@ -150,14 +151,15 @@ Do not add any other sections.
 
     try:
 
-        if not api_key:
+        if not api_key or not client:
             return (
                 "AI analysis unavailable: "
-                "OPENAI_API_KEY environment variable is not set."
+                "AI API key is not configured."
             )
 
+        model_name = os.getenv("AI_MODEL") or ("gemini-2.5-flash" if "generativelanguage" in base_url else "qwen3.6")
         response = client.chat.completions.create(
-            model="qwen3.6",
+            model=model_name,
             messages=[
                 {
                     "role": "user",
