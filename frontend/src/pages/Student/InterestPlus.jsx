@@ -1,99 +1,166 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
   Sparkles,
-  Mic,
+  Landmark,
+  Cpu,
   Code2,
-  Gamepad2,
-  BarChart3,
-  Palette,
   Briefcase,
-  FlaskConical,
-  Users,
+  TrendingUp,
+  Palette,
+  HeartPulse,
+  GraduationCap,
+  Scale,
+  Megaphone,
 } from "lucide-react";
 
+import { getInterestOptions, saveStudentInterest } from "../../services/studentService";
 import "./InterestPlus.css";
 
-const interests = [
-  {
-    id: "public-speaking",
-    title: "Public Speaking",
-    description: "Speaking, presenting, debating and communicating",
-    icon: Mic,
+const INTEREST_DETAILS_MAP = {
+  "Government & Public Services": {
+    id: "government-public-services",
+    title: "Government & Public Services",
+    description: "Civil services, governance, policy administration and public sector",
+    icon: Landmark,
   },
-  {
-    id: "technology",
-    title: "Technology",
-    description: "Programming, software and emerging technologies",
+  "IT & Technology": {
+    id: "it-technology",
+    title: "IT & Technology",
+    description: "Cloud computing, network infrastructure, IT systems and cybersecurity",
+    icon: Cpu,
+  },
+  "Coding & Software": {
+    id: "coding-software",
+    title: "Coding & Software",
+    description: "Software engineering, web development, algorithms and system architecture",
     icon: Code2,
   },
-  {
-    id: "gaming",
-    title: "Gaming",
-    description: "Game development, game design and interactive experiences",
-    icon: Gamepad2,
-  },
-  {
-    id: "analytics",
-    title: "Data & Analytics",
-    description: "Data, statistics, patterns and problem solving",
-    icon: BarChart3,
-  },
-  {
-    id: "creativity",
-    title: "Creativity & Design",
-    description: "Design, visual creativity and creative expression",
-    icon: Palette,
-  },
-  {
-    id: "business",
-    title: "Business",
-    description: "Entrepreneurship, marketing and management",
+  "Business & Entrepreneurship": {
+    id: "business-entrepreneurship",
+    title: "Business & Entrepreneurship",
+    description: "Startups, business strategy, product leadership and management",
     icon: Briefcase,
   },
-  {
-    id: "research",
-    title: "Research",
-    description: "Investigation, experimentation and discovery",
-    icon: FlaskConical,
+  "Finance": {
+    id: "finance",
+    title: "Finance",
+    description: "Financial markets, investment analysis, banking and wealth management",
+    icon: TrendingUp,
   },
-  {
-    id: "leadership",
-    title: "Leadership",
-    description: "Teamwork, coordination and decision making",
-    icon: Users,
+  "Creative & Media": {
+    id: "creative-media",
+    title: "Creative & Media",
+    description: "Digital design, media production, visual creativity and content creation",
+    icon: Palette,
   },
+  "Healthcare": {
+    id: "healthcare",
+    title: "Healthcare",
+    description: "Medical sciences, biotechnology, health informatics and clinical care",
+    icon: HeartPulse,
+  },
+  "Education": {
+    id: "education",
+    title: "Education",
+    description: "Academic teaching, educational technology, pedagogy and research",
+    icon: GraduationCap,
+  },
+  "Law": {
+    id: "law",
+    title: "Law",
+    description: "Legal studies, corporate compliance, intellectual property and advocacy",
+    icon: Scale,
+  },
+  "Marketing": {
+    id: "marketing",
+    title: "Marketing",
+    description: "Brand strategy, digital marketing, consumer insights and growth",
+    icon: Megaphone,
+  },
+};
+
+const DEFAULT_OPTIONS = [
+  "Government & Public Services",
+  "IT & Technology",
+  "Coding & Software",
+  "Business & Entrepreneurship",
+  "Finance",
+  "Creative & Media",
+  "Healthcare",
+  "Education",
+  "Law",
+  "Marketing",
 ];
+
+function buildInterestItem(title) {
+  if (INTEREST_DETAILS_MAP[title]) {
+    return INTEREST_DETAILS_MAP[title];
+  }
+  return {
+    id: title.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+    title,
+    description: `Explore pathways, roles and skills in ${title}`,
+    icon: Sparkles,
+  };
+}
 
 function InterestPlus() {
   const navigate = useNavigate();
 
+  const [availableInterests, setAvailableInterests] = useState(() =>
+    DEFAULT_OPTIONS.map(buildInterestItem)
+  );
   const [selectedInterests, setSelectedInterests] = useState([]);
 
-  const toggleInterest = (interestId) => {
+  useEffect(() => {
+    let isMounted = true;
+    getInterestOptions()
+      .then((options) => {
+        if (isMounted && Array.isArray(options) && options.length > 0) {
+          setAvailableInterests(options.map(buildInterestItem));
+        }
+      })
+      .catch((err) => {
+        console.warn("Could not load dynamic interest options:", err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const toggleInterest = (interestTitle) => {
     setSelectedInterests((current) => {
-      if (current.includes(interestId)) {
-        return current.filter((id) => id !== interestId);
+      if (current.includes(interestTitle)) {
+        return current.filter((title) => title !== interestTitle);
       }
 
-      return [...current, interestId];
+      return [...current, interestTitle];
     });
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (selectedInterests.length === 0) {
       return;
     }
 
-    // Temporary for now.
-    // Later this data will be sent to FastAPI.
-    console.log("Selected interests:", selectedInterests);
+    const primaryTitle = selectedInterests[0];
+
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const studentId = user.student_id || user.user_id || "STU001";
+      await saveStudentInterest(studentId, primaryTitle);
+    } catch (err) {
+      console.warn("Failed to persist interest immediately, continuing:", err);
+    }
 
     navigate("/student/interest/questions", {
       state: {
         selectedInterests,
+        primaryInterest: primaryTitle,
       },
     });
   };
@@ -151,16 +218,17 @@ function InterestPlus() {
           </div>
 
           <div className="interest-options">
-            {interests.map((interest) => {
+            {availableInterests.map((interest) => {
               const Icon = interest.icon;
 
-              const isSelected = selectedInterests.includes(interest.id);
+              const isSelected = selectedInterests.includes(interest.title);
 
               return (
                 <button
                   key={interest.id}
+                  type="button"
                   className={`interest-option ${isSelected ? "selected" : ""}`}
-                  onClick={() => toggleInterest(interest.id)}
+                  onClick={() => toggleInterest(interest.title)}
                 >
                   <div className="interest-option-icon">
                     <Icon size={22} />

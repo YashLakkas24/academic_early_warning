@@ -1,4 +1,8 @@
+import json
+import time
+
 from ai_student.interest_plus.flow import InterestPlusFlow
+from ai_student.llm.schemas import GeneratedQuestion
 
 
 flow = InterestPlusFlow(
@@ -11,81 +15,112 @@ flow = InterestPlusFlow(
 )
 
 
-print("\nINTEREST+ FLOW\n")
+print("\n")
+print("=" * 60)
+print("INTEREST+ ADAPTIVE FLOW")
+print("=" * 60)
 
 
-# ---------------------------------------------
-# Question 1
-# ---------------------------------------------
+# ------------------------------------------------------------
+# First question
+# ------------------------------------------------------------
 
 question = flow.get_next_question()
 
-print("Question:", question)
+
+# ------------------------------------------------------------
+# Simulated student answers
+#
+# IMPORTANT:
+# No question IDs are hardcoded.
+# The answer is given to whatever question
+# the AI generated.
+# ------------------------------------------------------------
+
+simulated_answers = [
+    5,
+    2,
+    ["MUN"],
+    "I enjoyed arguing my country's position and convincing other people.",
+    "I want to become more confident.",
+    "Managing nerves and speaking confidently.",
+    "I become nervous when speaking in front of a large audience.",
+    "I would like guided practice and feedback."
+]
 
 
-# ---------------------------------------------
-# Submit answers
-# ---------------------------------------------
-
-answers = {
-    "interest_level": 5,
-    "confidence": 2,
-    "experience": "Once",
-    "experience_detail": (
-        "I participated in MUN and enjoyed arguing "
-        "my country's position and convincing other people."
-    ),
-    "motivation": (
-        "I enjoy persuading people and presenting arguments."
-    ),
-    "development_goal": (
-        "I want to become more confident."
-    )
-}
+answer_index = 0
 
 
-# ---------------------------------------------
-# Simulate the complete student interaction
-# ---------------------------------------------
+while question is not None:
 
-question_texts = {
-    "interest_level": "How interested are you?",
-    "confidence": "How confident are you?",
-    "experience": "Have you participated in related activities?",
-    "experience_detail": "Tell us about your experience.",
-    "motivation": "What do you enjoy about this area?",
-    "development_goal": "What would you like to improve?"
-}
+    print("\n")
+    print("-" * 60)
+    print("QUESTION")
+    print("-" * 60)
 
+    print("Question ID :", question.question_id)
+    print("Question    :", question.question)
+    print("Type        :", question.response_type)
+    print("Options     :", question.options)
 
-for question_id, answer in answers.items():
+    # --------------------------------------------------------
+    # Get simulated answer
+    # --------------------------------------------------------
+
+    if answer_index >= len(simulated_answers):
+
+        print("\nNo more simulated answers.")
+        print("Stopping test.")
+
+        break
+
+    answer = simulated_answers[answer_index]
+
+    answer_index += 1
+
+    print("Student Answer:", answer)
+
+    # --------------------------------------------------------
+    # Submit answer
+    # --------------------------------------------------------
 
     result = flow.submit_answer(
-        question_id=question_id,
-        question=question_texts[question_id],
+        question_id=question.question_id,
+        question=question.question,
         answer=answer
     )
 
-    print(
-        f"\nAnswered: {question_id}"
-    )
+    time.sleep(1)
 
-    print(
-        "Completed:",
-        result["completed"]
-    )
+    print("Completed:", result["completed"])
 
-    print(
-        "Next question:",
-        result["next_question"]
-    )
+    # --------------------------------------------------------
+    # QUIZ COMPLETED
+    # --------------------------------------------------------
 
     if result["completed"]:
 
-        print("\nFINAL INTEREST ANALYSIS:\n")
+        print("\n")
+        print("=" * 60)
+        print("QUIZ COMPLETED")
+        print("=" * 60)
+
+        print("\nFINAL INTEREST ANALYSIS\n")
 
         print(
-            result["result"].model_dump_json(indent=2)
+            json.dumps(
+                result["result"],
+                indent=2
+            )
         )
 
         break
+
+    # --------------------------------------------------------
+    # Convert dictionary back into GeneratedQuestion
+    # --------------------------------------------------------
+
+    question = GeneratedQuestion.model_validate(
+        result["next_question"]
+    )
