@@ -29,19 +29,21 @@ def login(login_data:LoginRequest,db:Session= Depends(get_db)):
     )
     if not user:
         raise HTTPException(
-            status_code=401,detail="invalid ID or password "
+            status_code=401,
+            detail="Invalid ID or password"
         )
     if not password_hash.verify(
         login_data.password,
         user.password_hash
     ):
         raise HTTPException(
-            status_code=401,detail="invalid ID or password "
+            status_code=401,
+            detail="Invalid ID or password"
         )
     if user.role != login_data.role:
         raise HTTPException(
             status_code=401,
-            detail="selected does not match with user role "
+            detail=f"User is registered as a {user.role}, not a {login_data.role}"
         )
     return LoginResponse(
         message="Login successful",

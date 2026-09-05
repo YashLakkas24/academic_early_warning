@@ -1,16 +1,48 @@
+import sys
+from pathlib import Path
+
+# Add project root directory to Python path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from database import engine
+from database import engine, Base
+
+# IMPORTANT:
+# Import models before create_all()
+# so SQLAlchemy knows about all tables.
+from models import (
+    User,
+    Student,
+    StudentInterest,
+    QuizAnswer,
+    InterestAnalysis,
+)
+
 from routes.auth import router as auth_router
 from routes.teacher import router as teacher_router
 from routes.student import router as student_router
 from routes.interest import router as interest_router
 from routes.interest_options import router as interest_options_router
-from routes.ai_interest import router as ai_interest_router
+
+
 app = FastAPI()
 
+
+# ============================================================
+# CREATE DATABASE TABLES
+# ============================================================
+
+Base.metadata.create_all(bind=engine)
+
+
+# ============================================================
+# CORS
+# ============================================================
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,15 +58,20 @@ app.add_middleware(
 )
 
 
-# Existing routes
+# ============================================================
+# ROUTES
+# ============================================================
+
 app.include_router(auth_router)
 app.include_router(teacher_router)
 app.include_router(interest_router)
 app.include_router(interest_options_router)
-app.include_router(ai_interest_router)
-# Student routes
 app.include_router(student_router)
 
+
+# ============================================================
+# HOME
+# ============================================================
 
 @app.get("/")
 def home():
@@ -42,6 +79,10 @@ def home():
         "message": "Academic Early Warning Backend is running!"
     }
 
+
+# ============================================================
+# API TEST
+# ============================================================
 
 @app.get("/api/test")
 def api_test():
@@ -52,9 +93,15 @@ def api_test():
     }
 
 
+# ============================================================
+# DATABASE TEST
+# ============================================================
+
 @app.get("/api/test-db")
 def test_database():
+
     try:
+
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
 
@@ -64,6 +111,7 @@ def test_database():
         }
 
     except Exception as e:
+
         return {
             "status": "error",
             "message": str(e)

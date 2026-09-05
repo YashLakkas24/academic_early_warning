@@ -86,3 +86,153 @@ export async function getStudentInterestStatus(studentId) {
 
   return { completed: false, interests: [] };
 }
+/**
+ * Fetch available interest options: GET /api/interests/options
+ */
+export async function getInterestOptions() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/interests/options`, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.options || [];
+    }
+  } catch (err) {
+    console.warn("Failed to fetch interest options from API:", err);
+  }
+
+  return [
+    "Government & Public Services",
+    "IT & Technology",
+    "Coding & Software",
+    "Business & Entrepreneurship",
+    "Finance",
+    "Creative & Media",
+    "Healthcare",
+    "Education",
+    "Law",
+    "Marketing",
+  ];
+}
+
+/**
+ * Save selected student interest: POST /api/students/{student_id}/interests
+ */
+export async function saveStudentInterest(studentId, interest) {
+  const cleanId = (studentId || "").trim().toUpperCase();
+  if (!cleanId) throw new Error("Student ID is required.");
+
+  const response = await fetch(`${API_BASE_URL}/students/${encodeURIComponent(cleanId)}/interests`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({ interest }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Failed to save interest: ${errText}`);
+  }
+
+  return await response.json();
+}
+
+/**
+ * Start or resume an Interest+ AI discovery session: POST /api/students/{student_id}/interest-session/start
+ */
+export async function startInterestSession(studentId, interest, reset = false) {
+  const cleanId = (studentId || "").trim().toUpperCase();
+  if (!cleanId) throw new Error("Student ID is required.");
+
+  const response = await fetch(
+    `${API_BASE_URL}/students/${encodeURIComponent(cleanId)}/interest-session/start?reset=${reset}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ interest }),
+    }
+  );
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Failed to start interest session: ${errText}`);
+  }
+
+  return await response.json();
+}
+
+/**
+ * Submit answer to current question and receive next AI question or final analysis:
+ * POST /api/students/{student_id}/interest-session/answer
+ */
+export async function submitInterestAnswer(studentId, { interest, question_id, question, answer, question_order }) {
+  const cleanId = (studentId || "").trim().toUpperCase();
+  if (!cleanId) throw new Error("Student ID is required.");
+
+  const response = await fetch(
+    `${API_BASE_URL}/students/${encodeURIComponent(cleanId)}/interest-session/answer`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        interest,
+        question_id,
+        question,
+        answer,
+        question_order,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Failed to submit answer: ${errText}`);
+  }
+
+  return await response.json();
+}
+
+/**
+ * Fetch student's Interest+ AI analysis
+ * GET /api/students/{student_id}/interest-analysis
+ */
+export async function getStudentInterestAnalysis(studentId) {
+  const cleanId = (studentId || "").trim().toUpperCase();
+
+  if (!cleanId) {
+    throw new Error("Student ID is required.");
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/students/${encodeURIComponent(cleanId)}/interest-analysis`,
+    {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+
+    throw new Error(
+      `Failed to fetch interest analysis (${response.status}): ${errorText}`
+    );
+  }
+
+  return await response.json();
+}

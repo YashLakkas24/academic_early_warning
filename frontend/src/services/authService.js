@@ -31,8 +31,9 @@ export async function submitLogin(role, id, password) {
 
   const cleanId = id.trim().toUpperCase();
 
+  let response;
   try {
-    const response = await fetch(`${API_URL}/api/auth/login`, {
+    response = await fetch(`${API_URL}/api/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -44,55 +45,37 @@ export async function submitLogin(role, id, password) {
         role: role,
       }),
     });
-
-    let data;
-    try {
-      data = await response.json();
-    } catch {
-      data = null;
-    }
-
-    if (response.ok && data) {
-      const user = {
-        user_id: data.user_id,
-        full_name: data.full_name,
-        role: data.role,
-      };
-      localStorage.setItem("user", JSON.stringify(user));
-
-      return {
-        ...data,
-        redirectTo:
-          data.role === "teacher"
-            ? "/teacher/dashboard"
-            : "/student/dashboard",
-      };
-    }
-
-    if (response && (response.status === 401 || response.status === 400 || response.status === 422)) {
-      throw new Error(data?.detail || "Invalid ID or password.");
-    }
-  } catch (err) {
-    if (err.message === "Invalid ID or password." || (err.message && err.message.includes("does not match"))) {
-      throw err;
-    }
-
-    // Dev mode fallback when backend server is offline or unreachable
-    console.warn("Backend unavailable, using dev session fallback:", err);
-    const matchedStudent = MOCK_STUDENTS[cleanId];
-    const user = {
-      user_id: cleanId,
-      full_name: role === "student" ? (matchedStudent?.name || `Student (${cleanId})`) : "Dr. Sharma",
-      role: role,
-    };
-    localStorage.setItem("user", JSON.stringify(user));
-
-    return {
-      message: "Login successful",
-      user_id: user.user_id,
-      full_name: user.full_name,
-      role: user.role,
-      redirectTo: role === "teacher" ? "/teacher/dashboard" : "/student/dashboard",
-    };
+  } catch (networkErr) {
+    throw new Error(
+      "Cannot connect to the backend server. Please ensure FastAPI is running on http://127.0.0.1:8000."
+    );
   }
+
+  let data = null;
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+
+  if (!response.ok) {
+    const errorMsg = data?.detail || "Invalid ID or password.";
+    throw new Error(errorMsg);
+  }
+
+  const user = {
+    user_id: data.user_id,
+    student_id: data.user_id,
+    full_name: data.full_name,
+    role: data.role,
+  };
+  localStorage.setItem("user", JSON.stringify(user));
+
+  return {
+    ...data,
+    redirectTo:
+      data.role === "teacher"
+        ? "/teacher/dashboard"
+        : "/student/dashboard",
+  };
 }

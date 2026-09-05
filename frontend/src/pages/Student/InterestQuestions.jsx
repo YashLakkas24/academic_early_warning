@@ -1,6 +1,17 @@
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { ArrowLeft, ArrowRight, Sparkles, Mic, Check } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Sparkles,
+  Check,
+  RotateCcw,
+  Compass,
+} from "lucide-react";
+import {
+  startInterestSession,
+  submitInterestAnswer,
+} from "../../services/studentService";
 
 import "./InterestQuestions.css";
 
@@ -8,238 +19,186 @@ function InterestQuestions() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const selectedInterests = location.state?.selectedInterests || [
-    "public-speaking",
-  ];
+  const primaryInterest =
+    location.state?.primaryInterest ||
+    location.state?.selectedInterests?.[0] ||
+    "Coding & Software";
 
-  const [currentInterestIndex, setCurrentInterestIndex] = useState(0);
-  const [questionIndex, setQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState({});
+  const interestName =
+    typeof primaryInterest === "string" && primaryInterest.includes("-")
+      ? primaryInterest
+          .replace(/-/g, " ")
+          .replace(/\b\w/g, (char) => char.toUpperCase())
+      : primaryInterest || "Coding & Software";
+
+  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [questionNumber, setQuestionNumber] = useState(1);
+  const [totalQuestions, setTotalQuestions] = useState(5);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  const currentInterest = selectedInterests[currentInterestIndex];
-
-  /*
-   * Temporary question engine.
-   *
-   * Later:
-   *
-   * React → FastAPI → AI Question Engine
-   *
-   * The AI will decide what question comes next.
-   */
-
-  const getQuestions = (interest) => {
-    if (interest === "public-speaking") {
-      return [
-        {
-          id: "interest-level",
-          question: "How interested are you in Public Speaking?",
-          subtitle:
-            "Think about how much you genuinely enjoy speaking, presenting or expressing ideas.",
-          type: "scale",
-          options: [
-            { value: 1, label: "Not interested" },
-            { value: 2, label: "Slightly interested" },
-            { value: 3, label: "Moderately interested" },
-            { value: 4, label: "Very interested" },
-            { value: 5, label: "Extremely interested" },
-          ],
-        },
-
-        {
-          id: "ability",
-          question: "How would you rate your current Public Speaking ability?",
-          subtitle:
-            "Be honest. This is about your current ability, not where you want to be.",
-          type: "scale",
-          options: [
-            { value: 1, label: "Beginner" },
-            { value: 2, label: "Developing" },
-            { value: 3, label: "Average" },
-            { value: 4, label: "Good" },
-            { value: 5, label: "Very confident" },
-          ],
-        },
-
-        {
-          id: "experience",
-          question:
-            "Have you ever participated in activities involving Public Speaking?",
-          subtitle: "Select the experiences that apply to you.",
-          type: "multiple",
-          options: [
-            { value: "presentation", label: "Classroom presentations" },
-            { value: "debate", label: "Debates" },
-            { value: "mun", label: "MUN" },
-            { value: "anchoring", label: "Anchoring / Hosting" },
-            { value: "competition", label: "Speaking competitions" },
-            { value: "none", label: "None so far" },
-          ],
-        },
-
-        {
-          id: "mun-experience",
-          question: "What did you enjoy most about your MUN experience?",
-          subtitle:
-            "Your previous answer tells us you have tried MUN. Let's understand what attracted you to it.",
-          type: "single",
-          condition: (previousAnswers) =>
-            previousAnswers.experience?.includes("mun"),
-          options: [
-            { value: "speaking", label: "Speaking and presenting" },
-            { value: "debate", label: "Debate and argumentation" },
-            { value: "research", label: "Research and preparation" },
-            { value: "negotiation", label: "Negotiation" },
-            { value: "teamwork", label: "Team interaction" },
-          ],
-        },
-
-        {
-          id: "speaking-confidence",
-          question:
-            "How comfortable are you speaking without preparing beforehand?",
-          subtitle:
-            "For example, answering a question unexpectedly in front of a group.",
-          type: "scale",
-          options: [
-            { value: 1, label: "Very uncomfortable" },
-            { value: 2, label: "Uncomfortable" },
-            { value: 3, label: "Neutral" },
-            { value: 4, label: "Comfortable" },
-            { value: 5, label: "Very comfortable" },
-          ],
-        },
-      ];
+  const getStudentId = () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      return user.student_id || user.user_id || "STU001";
+    } catch {
+      return "STU001";
     }
-
-    return [
-      {
-        id: "general-interest",
-        question: `How interested are you in ${interest.replace("-", " ")}?`,
-        subtitle: "Tell us how strongly this area interests you.",
-        type: "scale",
-        options: [
-          { value: 1, label: "Not interested" },
-          { value: 2, label: "Slightly interested" },
-          { value: 3, label: "Moderately interested" },
-          { value: 4, label: "Very interested" },
-          { value: 5, label: "Extremely interested" },
-        ],
-      },
-    ];
   };
 
-  const allQuestions = getQuestions(currentInterest);
+  const studentId = getStudentId();
 
   /*
-   * Remove conditional questions that don't apply.
+   * Initialize or resume the live AI Interest+ session on mount
    */
-  const questions = allQuestions.filter((question) => {
-    if (!question.condition) {
-      return true;
+  const initSession = async (resetSession = false) => {
+    try {
+      setLoading(true);
+      setError("");
+      setSelectedAnswer(null);
+
+      const response = await startInterestSession(
+        studentId,
+        interestName,
+        resetSession
+      );
+
+      if (response.completed) {
+        // Assessment already finished, navigate to results
+        navigate("/student/interest/result", {
+          state: {
+            selectedInterests: [interestName],
+            primaryInterest: interestName,
+            analysis: response.analysis,
+          },
+        });
+        return;
+      }
+
+      if (response.next_question) {
+        setCurrentQuestion(response.next_question);
+        setQuestionNumber(response.question_number || 1);
+        setTotalQuestions(response.total_questions || 5);
+      } else {
+        throw new Error("No question returned from the AI service.");
+      }
+    } catch (err) {
+      console.error("Failed to start AI interest session:", err);
+      setError(
+        err.message ||
+          "Could not connect to the AI service. Please check your backend connection."
+      );
+    } finally {
+      setLoading(false);
     }
-
-    return question.condition(answers);
-  });
-
-  const currentQuestion = questions[questionIndex];
-
-  const handleOptionClick = (value) => {
-    if (currentQuestion.type === "multiple") {
-      setSelectedAnswer((current) => {
-        const currentValues = Array.isArray(current) ? current : [];
-
-        if (currentValues.includes(value)) {
-          return currentValues.filter((item) => item !== value);
-        }
-
-        return [...currentValues, value];
-      });
-
-      return;
-    }
-
-    setSelectedAnswer(value);
   };
 
-  const handleNext = () => {
+  useEffect(() => {
+    initSession(false);
+  }, [studentId, interestName]);
+
+  /*
+   * Option selection handlers
+   */
+  const handleSingleSelect = (val) => {
+    setSelectedAnswer(val);
+  };
+
+  const handleMultipleToggle = (val) => {
+    setSelectedAnswer((prev) => {
+      const arr = Array.isArray(prev) ? prev : [];
+      if (arr.includes(val)) {
+        return arr.filter((item) => item !== val);
+      }
+      return [...arr, val];
+    });
+  };
+
+  const handleScaleSelect = (val) => {
+    setSelectedAnswer(val);
+  };
+
+  const isSelected = (val) => {
+    if (Array.isArray(selectedAnswer)) {
+      return selectedAnswer.includes(val);
+    }
+    return selectedAnswer === val || String(selectedAnswer) === String(val);
+  };
+
+  /*
+   * Submit student's answer and fetch next AI question or final analysis
+   */
+  const handleNext = async () => {
     if (
       selectedAnswer === null ||
+      selectedAnswer === "" ||
       (Array.isArray(selectedAnswer) && selectedAnswer.length === 0)
     ) {
       return;
     }
 
-    const updatedAnswers = {
-      ...answers,
-      [currentQuestion.id]: selectedAnswer,
-    };
+    try {
+      setSubmitting(true);
+      setError("");
 
-    setAnswers(updatedAnswers);
+      const payload = {
+        interest: interestName,
+        question_id: currentQuestion.question_id || `q${questionNumber}`,
+        question: currentQuestion.question || "",
+        answer: selectedAnswer,
+        question_order: questionNumber,
+      };
 
-    if (questionIndex < questions.length - 1) {
-      setQuestionIndex(questionIndex + 1);
-      setSelectedAnswer(
-        updatedAnswers[questions[questionIndex + 1]?.id] || null,
+      const response = await submitInterestAnswer(studentId, payload);
+
+      if (response.completed) {
+        // 5 Questions completed -> Assessment done!
+        navigate("/student/interest/result", {
+          state: {
+            selectedInterests: [interestName],
+            primaryInterest: interestName,
+            analysis: response.analysis,
+          },
+        });
+        return;
+      }
+
+      if (response.next_question) {
+        setCurrentQuestion(response.next_question);
+        setQuestionNumber(response.question_number || questionNumber + 1);
+        setSelectedAnswer(null);
+      }
+    } catch (err) {
+      console.error("Failed to submit answer to AI:", err);
+      setError(
+        err.message ||
+          "Failed to process your response. Please try submitting again."
       );
-
-      return;
+    } finally {
+      setSubmitting(false);
     }
-
-    /*
-     * Current interest finished.
-     */
-    if (currentInterestIndex < selectedInterests.length - 1) {
-      setCurrentInterestIndex(currentInterestIndex + 1);
-      setQuestionIndex(0);
-      setSelectedAnswer(null);
-
-      return;
-    }
-
-    /*
-     * Temporary result.
-     * Later this will call the backend/AI.
-     */
-    console.log("Interest+ answers:", updatedAnswers);
-
-    navigate("/student/interest/result", {
-      state: {
-        selectedInterests,
-        answers: updatedAnswers,
-      },
-    });
   };
 
-  const handleBack = () => {
-    if (questionIndex > 0) {
-      setQuestionIndex(questionIndex - 1);
+  const isNextDisabled =
+    submitting ||
+    selectedAnswer === null ||
+    selectedAnswer === "" ||
+    (Array.isArray(selectedAnswer) && selectedAnswer.length === 0);
 
-      const previousQuestion = questions[questionIndex - 1];
-
-      setSelectedAnswer(answers[previousQuestion.id] || null);
-
-      return;
-    }
-
-    navigate("/student/interest");
-  };
-
-  const isSelected = (value) => {
-    if (Array.isArray(selectedAnswer)) {
-      return selectedAnswer.includes(value);
-    }
-
-    return selectedAnswer === value;
-  };
-
-  const progress = ((questionIndex + 1) / questions.length) * 100;
+  const progress = Math.min(
+    100,
+    Math.round((questionNumber / totalQuestions) * 100)
+  );
 
   return (
     <div className="interest-questions-page">
       <header className="questions-header">
-        <button className="questions-back" onClick={handleBack}>
+        <button
+          className="questions-back"
+          onClick={() => navigate("/student/interest")}
+        >
           <ArrowLeft size={17} />
           Back
         </button>
@@ -250,11 +209,12 @@ function InterestQuestions() {
         </div>
 
         <span className="questions-counter">
-          Question {questionIndex + 1} of {questions.length}
+          Question {questionNumber} of {totalQuestions}
         </span>
       </header>
 
       <main className="questions-main">
+        {/* Progress Bar */}
         <div className="questions-progress">
           <div
             className="questions-progress-fill"
@@ -262,74 +222,180 @@ function InterestQuestions() {
           />
         </div>
 
+        {/* Exploring Context */}
         <div className="interest-context">
           <div className="context-icon">
-            <Mic size={20} />
+            <Compass size={20} />
           </div>
 
           <div>
-            <span>EXPLORING</span>
-            <strong>
-              {currentInterest
-                .replace("-", " ")
-                .replace(/\b\w/g, (letter) => letter.toUpperCase())}
-            </strong>
+            <span>AI EXPLORATION</span>
+            <strong>{interestName}</strong>
           </div>
         </div>
 
-        <section className="question-card">
-          <div className="question-number">0{questionIndex + 1}</div>
-
-          <h1>{currentQuestion.question}</h1>
-
-          <p className="question-subtitle">{currentQuestion.subtitle}</p>
-
-          <div className="question-options">
-            {currentQuestion.options.map((option) => {
-              const selected = isSelected(option.value);
-
-              return (
-                <button
-                  key={option.value}
-                  className={`question-option ${selected ? "selected" : ""}`}
-                  onClick={() => handleOptionClick(option.value)}
-                >
-                  <span className="option-radio">
-                    {selected && <Check size={14} />}
-                  </span>
-
-                  <span>{option.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {currentQuestion.type === "multiple" && (
-            <span className="multiple-hint">You can select more than one.</span>
-          )}
-
-          <div className="question-actions">
-            <button
-              className="question-next"
-              disabled={
-                selectedAnswer === null ||
-                (Array.isArray(selectedAnswer) && selectedAnswer.length === 0)
-              }
-              onClick={handleNext}
-            >
-              {questionIndex === questions.length - 1 &&
-              currentInterestIndex === selectedInterests.length - 1
-                ? "Complete"
-                : "Continue"}
-
-              <ArrowRight size={17} />
+        {/* Error notification */}
+        {error && (
+          <div className="questions-error-banner">
+            <span>{error}</span>
+            <button onClick={() => initSession(true)}>
+              <RotateCcw size={13} style={{ marginRight: "4px" }} />
+              Restart Quiz
             </button>
           </div>
-        </section>
+        )}
+
+        {/* Question Card or Loader */}
+        {loading ? (
+          <section className="question-card questions-loading-card">
+            <div className="ai-spinner" />
+            <h2>Connecting with AI...</h2>
+            <p className="question-subtitle">
+              Generating your personalized adaptive questions for {interestName}.
+            </p>
+          </section>
+        ) : currentQuestion ? (
+          <section className="question-card">
+            <div className="question-number">
+              0{questionNumber} / 0{totalQuestions}
+            </div>
+
+            <h1>{currentQuestion.question}</h1>
+
+            {/* Scale type question */}
+            {currentQuestion.response_type === "scale" && (
+              <div className="question-scale-grid">
+                {[
+                  { val: 1, label: "Low / None" },
+                  { val: 2, label: "Slight" },
+                  { val: 3, label: "Moderate" },
+                  { val: 4, label: "High" },
+                  { val: 5, label: "Very High" },
+                ].map((scaleItem) => {
+                  const selected =
+                    selectedAnswer === scaleItem.val ||
+                    selectedAnswer === String(scaleItem.val);
+                  return (
+                    <button
+                      key={scaleItem.val}
+                      type="button"
+                      className={`scale-option-btn ${selected ? "selected" : ""}`}
+                      onClick={() => handleScaleSelect(scaleItem.val)}
+                    >
+                      <strong>{scaleItem.val}</strong>
+                      <span>{scaleItem.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Multiple Choice question */}
+            {currentQuestion.response_type === "multiple_choice" && (
+              <div className="question-options">
+                {(currentQuestion.options || []).map((opt, idx) => {
+                  const selected = isSelected(opt);
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      className={`question-option ${selected ? "selected" : ""}`}
+                      onClick={() => handleMultipleToggle(opt)}
+                    >
+                      <span className="option-radio">
+                        {selected && <Check size={14} />}
+                      </span>
+                      <span>{opt}</span>
+                    </button>
+                  );
+                })}
+                <span className="multiple-hint">
+                  You can select more than one option.
+                </span>
+              </div>
+            )}
+
+            {/* Single Choice question */}
+            {currentQuestion.response_type === "single_choice" && (
+              <div className="question-options">
+                {(currentQuestion.options || []).map((opt, idx) => {
+                  const selected = isSelected(opt);
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      className={`question-option ${selected ? "selected" : ""}`}
+                      onClick={() => handleSingleSelect(opt)}
+                    >
+                      <span className="option-radio">
+                        {selected && <Check size={14} />}
+                      </span>
+                      <span>{opt}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Text question */}
+            {currentQuestion.response_type === "text" && (
+              <div style={{ marginTop: "16px" }}>
+                <textarea
+                  className="question-textarea"
+                  rows={4}
+                  placeholder="Type your response here..."
+                  value={selectedAnswer || ""}
+                  onChange={(e) => setSelectedAnswer(e.target.value)}
+                />
+              </div>
+            )}
+
+            {/* Default options fallback if response_type is undefined */}
+            {!["scale", "multiple_choice", "single_choice", "text"].includes(
+              currentQuestion.response_type
+            ) &&
+              currentQuestion.options &&
+              currentQuestion.options.length > 0 && (
+                <div className="question-options">
+                  {currentQuestion.options.map((opt, idx) => {
+                    const selected = isSelected(opt);
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        className={`question-option ${selected ? "selected" : ""}`}
+                        onClick={() => handleSingleSelect(opt)}
+                      >
+                        <span className="option-radio">
+                          {selected && <Check size={14} />}
+                        </span>
+                        <span>{opt}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+            <div className="question-actions">
+              <button
+                className="question-next"
+                disabled={isNextDisabled}
+                onClick={handleNext}
+              >
+                {submitting
+                  ? "AI Thinking..."
+                  : questionNumber >= totalQuestions
+                  ? "Finish Assessment"
+                  : "Continue"}
+                <ArrowRight size={17} />
+              </button>
+            </div>
+          </section>
+        ) : null}
 
         <p className="adaptive-message">
           <Sparkles size={14} />
-          Your next question can change based on your answer.
+          Questions adapt dynamically to your answers using Qwen AI.
         </p>
       </main>
     </div>

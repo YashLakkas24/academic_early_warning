@@ -1,3 +1,4 @@
+import os
 import json
 import time
 
@@ -39,31 +40,53 @@ from ai_student.career_pivot.schemas import (
 
 
 # ============================================================
-# GEMINI MODEL CONFIGURATION
+# GEMINI / LLM MODEL CONFIGURATION
 # ============================================================
 
-DEFAULT_MODEL = "gemini-3.5-flash"
+DEFAULT_MODEL = os.getenv("AI_MODEL", "gemini-3.6-flash")
 
-# These are the TEXT models actually exposed by your Gemini API key.
-#
-# We intentionally do NOT include:
-# - TTS models
-# - image models
-# - video models
-# - embedding models
-# - robotics models
-# - old/unavailable Gemini 1.5 models
-# - experimental models that may not support this API call
-#
 VALID_MODELS = [
+    DEFAULT_MODEL,
+    "gemini-3.6-flash",
     "gemini-3.5-flash",
     "gemini-3.5-flash-lite",
-    "gemini-3.6-flash",
     "gemini-3.7-flash",
     "gemini-3.8-flash",
-    "gemini-2.5-flash",
-    "gemini-2.5-flash-lite",
 ]
+# Remove duplicates while preserving order
+VALID_MODELS = list(dict.fromkeys(VALID_MODELS))
+
+
+def parse_json_from_llm(content: str) -> dict:
+    """
+    Robust JSON parser for LLM responses. Strips markdown fences,
+    preambles, and extracts the outermost JSON object/array.
+    """
+    content = (content or "").strip()
+    if not content:
+        raise ValueError("Empty response from LLM")
+
+    # Strip markdown code blocks
+    if "```json" in content:
+        content = content.split("```json", 1)[1].split("```", 1)[0].strip()
+    elif "```" in content:
+        content = content.split("```", 1)[1].split("```", 1)[0].strip()
+
+    # Extract JSON object or array
+    start_obj = content.find("{")
+    end_obj = content.rfind("}")
+    start_arr = content.find("[")
+    end_arr = content.rfind("]")
+
+    if start_obj != -1 and end_obj != -1 and end_obj > start_obj:
+        if start_arr == -1 or start_obj < start_arr:
+            content = content[start_obj:end_obj + 1].strip()
+        elif end_arr > start_arr:
+            content = content[start_arr:end_arr + 1].strip()
+    elif start_arr != -1 and end_arr != -1 and end_arr > start_arr:
+        content = content[start_arr:end_arr + 1].strip()
+
+    return json.loads(content)
 
 
 # ============================================================
@@ -95,10 +118,10 @@ def safe_chat_completion(**kwargs):
     max_retries = 3
     base_delay = 3.0
 
-    # --------------------------------------------------------
-    # Determine starting model
-    # --------------------------------------------------------
+    # Default to json_object response_format for structured outputs
+    kwargs.setdefault("response_format", {"type": "json_object"})
 
+    # Determine starting model
     requested_model = kwargs.get("model", DEFAULT_MODEL)
 
     # Start with requested model, then try every valid fallback.
@@ -296,6 +319,9 @@ def safe_chat_completion(**kwargs):
     )
 
 
+MAX_QUESTIONS = 5
+
+
 # ============================================================
 # ADAPTIVE QUESTION GENERATION
 # ============================================================
@@ -310,6 +336,19 @@ def generate_next_question(
     existing_skills = existing_skills or []
     previous_interests = previous_interests or []
 
+    # --------------------------------------------------------
+    # NEVER generate Q6
+    # --------------------------------------------------------
+
+    if len(conversation) >= MAX_QUESTIONS:
+        return None
+
+    question_number = len(conversation) + 1
+
+    # --------------------------------------------------------
+    # Tell AI exactly how much information remains
+    # --------------------------------------------------------
+
     user_prompt = f"""
 Student interest:
 {interest}
@@ -323,37 +362,45 @@ Previous interests:
 Previous questions and answers:
 {json.dumps(conversation)}
 
-Generate exactly ONE next adaptive question.
+Current question number:
+{question_number}
 
-Rules:
-- Do not repeat previous questions.
-- Use the previous answers to personalize the question.
-- Ask only ONE question.
-- For single_choice, provide 3 to 5 options.
+Maximum questions:
+{MAX_QUESTIONS}
+
+You MUST collect enough information within exactly 5 questions.
+
+The assessment should explore:
+1. Interest level
+2. Practical experience
+3. Confidence
+4. Motivation / strengths
+5. Development needs / relevant skills
+
+IMPORTANT:
+- Ask exactly ONE adaptive question for question number {question_number} of {MAX_QUESTIONS}.
+- Do NOT repeat previous questions.
+- Adapt the question based on the student's previous answers.
+- For single_choice, provide 3 to 5 clear options.
 - For multiple_choice, provide 3 to 6 options.
-- For scale, provide appropriate scale options.
-- For text questions, do not provide options.
-- If enough information has been collected, return:
-  {{"completed": true}}
+- For scale, provide 5 scale options (1 to 5).
+- For text, options should be null or empty.
+- NEVER return {{"completed": true}} before question 5. Always provide a full question structure.
 
 Return ONLY this JSON structure:
-
 {{
     "completed": false,
-    "question_id": "unique_id",
-    "question": "question text",
+    "question_id": "q{question_number}_{interest.lower().replace(' ', '_')}",
+    "question": "Clear question text here?",
     "response_type": "single_choice",
-    "options": ["option 1", "option 2", "option 3"]
+    "options": ["Option 1", "Option 2", "Option 3"]
 }}
 
-Do not add explanations.
-Do not use Markdown.
-Do not use code fences.
-Do not leave any field incomplete.
+Do not use markdown code fences. Return ONLY valid JSON.
 """
 
     # ========================================================
-    # FIRST ATTEMPT
+    # LLM CALL
     # ========================================================
 
     response = safe_chat_completion(
@@ -385,32 +432,18 @@ Do not leave any field incomplete.
         None,
     )
 
-    print(
-        f"\n[Gemini] Finish reason: {finish_reason}",
-        flush=True,
-    )
-
     if content is None:
         raise ValueError(
-            "Gemini returned an empty response."
+            "AI returned an empty response."
         )
 
     content = content.strip()
 
     # ========================================================
-    # DEBUG
-    # ========================================================
-
-    print("\n[Gemini Raw Response]")
-    print(content)
-    print("[End Gemini Raw Response]\n")
-
-    # ========================================================
-    # REMOVE MARKDOWN CODE FENCE IF GEMINI ADDS ONE
+    # REMOVE MARKDOWN CODE FENCE IF RETURNED
     # ========================================================
 
     if content.startswith("```"):
-
         if content.startswith("```json"):
             content = content[len("```json"):].strip()
         else:
@@ -428,12 +461,8 @@ Do not leave any field incomplete.
         "max_tokens",
         "MAX_TOKENS",
     ):
-
         raise ValueError(
-            "Gemini stopped generating because the output "
-            "reached its token limit.\n\n"
-            f"Finish reason: {finish_reason}\n\n"
-            f"Partial response:\n{content}"
+            "AI stopped generating because output reached token limit."
         )
 
     # ========================================================
@@ -441,16 +470,10 @@ Do not leave any field incomplete.
     # ========================================================
 
     try:
-
         data = json.loads(content)
-
     except json.JSONDecodeError as e:
-
         raise ValueError(
-            "LLM did not return valid JSON.\n\n"
-            f"JSON Error: {e}\n\n"
-            f"Finish reason: {finish_reason}\n\n"
-            f"Response:\n{content}"
+            f"AI did not return valid JSON: {e}\nResponse: {content}"
         ) from e
 
     # ========================================================
@@ -458,22 +481,24 @@ Do not leave any field incomplete.
     # ========================================================
 
     if data.get("completed") is True:
-        return None
+        if question_number < MAX_QUESTIONS:
+            # If AI mistakenly flagged completion early, force a valid fallback question structure
+            data["completed"] = False
+            if not data.get("question"):
+                data["question"] = f"What specific area in {interest} would you like to explore next?"
+                data["response_type"] = "single_choice"
+                data["options"] = ["Foundational Skills", "Hands-on Projects", "Industry Practices", "Advanced Concepts"]
+                data["question_id"] = f"q{question_number}_{interest.lower().replace(' ', '_')}"
 
     # ========================================================
     # VALIDATE GENERATED QUESTION
     # ========================================================
 
     try:
-
         question = GeneratedQuestion.model_validate(data)
-
     except Exception as e:
-
         raise ValueError(
-            "LLM output does not match "
-            "GeneratedQuestion schema.\n\n"
-            f"Data:\n{data}"
+            f"AI output does not match GeneratedQuestion schema:\n{data}"
         ) from e
 
     # ========================================================
@@ -521,15 +546,10 @@ def generate_interest_analysis(
 
     content = response.choices[0].message.content.strip()
 
-    if content.startswith("```"):
-        content = content.replace("```json", "", 1)
-        content = content.replace("```", "", 1)
-        content = content.strip()
-
     try:
-        data = json.loads(content)
+        data = parse_json_from_llm(content)
 
-    except json.JSONDecodeError as e:
+    except Exception as e:
         raise ValueError(
             "LLM did not return valid JSON.\n\n"
             f"Response:\n{content}"
@@ -594,20 +614,15 @@ Return ONLY valid JSON.
                 "content": user_prompt,
             },
         ],
-        max_tokens=1200,
+        max_tokens=4000,
     )
 
     content = response.choices[0].message.content.strip()
 
-    if content.startswith("```"):
-        content = content.replace("```json", "", 1)
-        content = content.replace("```", "", 1)
-        content = content.strip()
-
     try:
-        data = json.loads(content)
+        data = parse_json_from_llm(content)
 
-    except json.JSONDecodeError as e:
+    except Exception as e:
         raise ValueError(
             "LLM did not return valid JSON for "
             "direction discovery.\n\n"
@@ -705,7 +720,7 @@ Return ONLY valid JSON in this structure:
                 "content": user_prompt,
             },
         ],
-        max_tokens=2000,
+        max_tokens=4000,
         response_format={
             "type": "json_object",
         },
@@ -745,46 +760,13 @@ Return ONLY valid JSON in this structure:
     print("[End Gemini Skill Discovery Raw Response]\n")
 
     # --------------------------------------------------------
-    # REMOVE MARKDOWN CODE FENCE
-    # --------------------------------------------------------
-
-    if content.startswith("```"):
-
-        if content.startswith("```json"):
-            content = content[len("```json"):].strip()
-        else:
-            content = content[len("```"):].strip()
-
-        if content.endswith("```"):
-            content = content[:-3].strip()
-
-    # --------------------------------------------------------
-    # DETECT TRUNCATION
-    # --------------------------------------------------------
-
-    if finish_reason in (
-        "length",
-        "max_tokens",
-        "MAX_TOKENS",
-    ):
-
-        raise ValueError(
-            "Gemini stopped generating because the skill "
-            "discovery output reached its token limit.\n\n"
-            f"Finish reason: {finish_reason}\n\n"
-            f"Partial response:\n{content}"
-        )
-
-    # --------------------------------------------------------
     # PARSE JSON
     # --------------------------------------------------------
 
     try:
+        data = parse_json_from_llm(content)
 
-        data = json.loads(content)
-
-    except json.JSONDecodeError as e:
-
+    except Exception as e:
         raise ValueError(
             "LLM did not return valid JSON for "
             "skill discovery.\n\n"
@@ -798,7 +780,6 @@ Return ONLY valid JSON in this structure:
     # --------------------------------------------------------
 
     try:
-
         return SkillDiscoveryResult.model_validate(data)
 
     except Exception as e:
@@ -926,20 +907,15 @@ Return ONLY valid JSON.
                 "content": user_prompt,
             },
         ],
-        max_tokens=1500,
+        max_tokens=5000,
     )
 
     content = response.choices[0].message.content.strip()
 
-    if content.startswith("```"):
-        content = content.replace("```json", "", 1)
-        content = content.replace("```", "", 1)
-        content = content.strip()
-
     try:
-        data = json.loads(content)
+        data = parse_json_from_llm(content)
 
-    except json.JSONDecodeError as e:
+    except Exception as e:
         raise ValueError(
             "LLM did not return valid JSON for "
             "skill assessment.\n\n"
@@ -1079,7 +1055,7 @@ Return ONLY valid JSON.
                 "content": user_prompt,
             },
         ],
-        max_tokens=1200,
+        max_tokens=4000,
         response_format={
             "type": "json_object",
         },
@@ -1087,15 +1063,10 @@ Return ONLY valid JSON.
 
     content = response.choices[0].message.content.strip()
 
-    if content.startswith("```"):
-        content = content.replace("```json", "", 1)
-        content = content.replace("```", "", 1)
-        content = content.strip()
-
     try:
-        data = json.loads(content)
+        data = parse_json_from_llm(content)
 
-    except json.JSONDecodeError as e:
+    except Exception as e:
         raise ValueError(
             "LLM did not return valid JSON for transferable "
             "skill analysis.\n\n"
@@ -1194,7 +1165,7 @@ Return ONLY valid JSON.
                 "content": user_prompt,
             },
         ],
-        max_tokens=1500,
+        max_tokens=4000,
         response_format={
             "type": "json_object",
         },
@@ -1202,15 +1173,10 @@ Return ONLY valid JSON.
 
     content = response.choices[0].message.content.strip()
 
-    if content.startswith("```"):
-        content = content.replace("```json", "", 1)
-        content = content.replace("```", "", 1)
-        content = content.strip()
-
     try:
-        data = json.loads(content)
+        data = parse_json_from_llm(content)
 
-    except json.JSONDecodeError as e:
+    except Exception as e:
         raise ValueError(
             "LLM did not return valid JSON for skill gap analysis.\n\n"
             f"Response:\n{content}"
@@ -1330,7 +1296,7 @@ Return ONLY valid JSON.
                 "content": user_prompt,
             },
         ],
-        max_tokens=1800,
+        max_tokens=5000,
         response_format={
             "type": "json_object",
         },
@@ -1338,15 +1304,10 @@ Return ONLY valid JSON.
 
     content = response.choices[0].message.content.strip()
 
-    if content.startswith("```"):
-        content = content.replace("```json", "", 1)
-        content = content.replace("```", "", 1)
-        content = content.strip()
-
     try:
-        data = json.loads(content)
+        data = parse_json_from_llm(content)
 
-    except json.JSONDecodeError as e:
+    except Exception as e:
         raise ValueError(
             "LLM did not return valid JSON for transition roadmap.\n\n"
             f"Response:\n{content}"
