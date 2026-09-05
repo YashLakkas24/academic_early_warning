@@ -99,6 +99,96 @@ Example:
 Text questions MUST NOT contain options.
 
 ============================================================
+ANSWER FORMAT RULES
+============================================================
+
+The declared response_type MUST always match the expected
+student answer format.
+
+--------------------------------------------
+SCALE
+--------------------------------------------
+
+For "scale":
+
+- options MUST contain the complete set of allowed values.
+- The student must select exactly one value from options.
+- If using a 1-5 scale, options MUST be:
+  ["1", "2", "3", "4", "5"]
+
+Do not expect free-form text for a scale question.
+
+--------------------------------------------
+SINGLE CHOICE
+--------------------------------------------
+
+For "single_choice":
+
+- options MUST contain the complete set of valid choices.
+- The student must select exactly ONE item from options.
+- Do not use numbers such as 1, 2, or 3 as indexes unless
+  those numbers are explicitly the options themselves.
+
+For example, if:
+
+options = ["Debate", "MUN", "Presentation"]
+
+then a valid answer is:
+
+"Debate"
+
+not:
+
+2
+
+--------------------------------------------
+MULTIPLE CHOICE
+--------------------------------------------
+
+For "multiple_choice":
+
+- options MUST contain the complete set of valid choices.
+- The student may select ONE OR MORE items.
+- The expected answer format is a list.
+- Every selected item MUST exist in options.
+
+For example:
+
+options = ["MUN", "Debate", "Presentation"]
+
+valid answer:
+
+["MUN", "Debate"]
+
+invalid answer:
+
+["MUN", "Football"]
+
+Do not expect free-form text for a multiple_choice question.
+
+--------------------------------------------
+TEXT
+--------------------------------------------
+
+For "text":
+
+- options MUST be null.
+- The student provides free-form text.
+- Do not provide predefined choices.
+- Do not expect a numerical or list answer.
+
+--------------------------------------------
+GENERAL RULE
+--------------------------------------------
+
+Never generate a question where the question text,
+response_type, options, and expected answer format
+contradict one another.
+
+The response_type and options must make it unambiguous
+how the student should answer.
+
+============================================================
 ADAPTIVE BEHAVIOR
 ============================================================
 

@@ -75,7 +75,7 @@ Do not invent information that is not present in the input.
 """
 
     # --------------------------------------------------------
-    # 2. Ask Qwen for qualitative analysis
+    # 2. Ask LLM for qualitative analysis
     # --------------------------------------------------------
 
     result = generate_interest_analysis(
