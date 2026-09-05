@@ -2,20 +2,22 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from openai import OpenAI
+
 # Project root
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-# Load backend/.env
-load_dotenv(PROJECT_ROOT / "backend" / ".env")
+ENV_PATH = PROJECT_ROOT / ".env"
+load_dotenv(dotenv_path=ENV_PATH, override=True)
 
-AI_KEY = os.getenv("AI_KEY")
-AI_BASE_URL = os.getenv("AI_BASE_URL", "https://ai.tcetcercd.in/v1")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+AI_BASE_URL = os.getenv("AI_BASE_URL")
 
-if not AI_KEY:
-    raise ValueError("AI_KEY is not set in the environment.")
+if not GEMINI_API_KEY:
+    raise RuntimeError("GEMINI_API_KEY is not set")
 if not AI_BASE_URL:
-    raise ValueError("AI_BASE_URL is not set in backend/.env")
+    raise RuntimeError("AI_BASE_URL is not set")
 
 client = OpenAI(
+    api_key=GEMINI_API_KEY,
     base_url=AI_BASE_URL,
-    api_key=AI_KEY
-)
+    timeout=60.0,
+)
