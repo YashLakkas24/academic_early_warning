@@ -3,87 +3,51 @@ import pandas as pd
 from .validator import validate_data
 from .risk_calculator import calculate_risk
 from .explainability import generate_explanation
+from .ai_analysis import generate_ai_analysis
 
 
 def analyze_student(student):
-
-    # -----------------------------------------------------
-    # STEP 1: Calculate deterministic risk
-    # -----------------------------------------------------
-
+ 
     result = calculate_risk(student)
-
-    # -----------------------------------------------------
-    # STEP 2: Generate deterministic explanation
-    # -----------------------------------------------------
-
-    explanation = generate_explanation(
-        student,
-        result["trend"],
-        result["risk_level"]
-    )
+ 
+    explanation = generate_explanation(student, result["trend"], result["risk_level"])
 
     result["explanation"] = explanation
-
-    # -----------------------------------------------------
-    # STEP 3: Student identity
-    # -----------------------------------------------------
-
+ 
     result["student_id"] = student["student_id"]
     result["name"] = student["name"]
 
     return result
 
+
+def generate_student_ai_analysis(student):
+    """
+    Generate AI analysis for one selected student.
+
+    Risk values are calculated deterministically first.
+    The AI only explains the verified result and provides
+    faculty intervention guidance.
+    """
+
+    risk_result = analyze_student(student)
+
+    ai_analysis = generate_ai_analysis(student, risk_result)
+    risk_result["ai_analysis"] = ai_analysis
+    return risk_result
+
+
 def analyze_dataset(df):
-
-    # -----------------------------------------------------
-    # Validate dataset
-    # -----------------------------------------------------
-
+    
     validate_data(df)
-
-    # -----------------------------------------------------
-    # Convert dataframe rows into student records
-    # -----------------------------------------------------
-
-    students = [
-        student
-        for _, student in df.iterrows()
-    ]
+ 
+    students = [student for _, student in df.iterrows()]
 
     results = []
-
-    # -----------------------------------------------------
-    # Calculate deterministic risk for every student
-    # -----------------------------------------------------
-
+ 
     for student in students:
 
         result = analyze_student(student)
 
         results.append(result)
-
-    # -----------------------------------------------------
-    # Return results in original CSV order
-    # -----------------------------------------------------
-
+ 
     return results
-
-
-# =========================================================
-# LOCAL TEST
-# =========================================================
-
-if __name__ == "__main__":
-
-    df = pd.read_csv(
-        "ai/data/students.csv"
-    )
-
-    results = analyze_dataset(df)
-
-    for result in results:
-
-        print(
-            result
-        )

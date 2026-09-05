@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, Sparkles, Mic, Check } from "lucide-react";
 
 import "./InterestQuestions.css";
@@ -12,140 +12,96 @@ function InterestQuestions() {
     "public-speaking",
   ];
 
+  const savedUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "{}");
+    } catch {
+      return {};
+    }
+  })();
+
+  const studentId = savedUser.user_id || "STU001";
+
   const [currentInterestIndex, setCurrentInterestIndex] = useState(0);
-  const [questionIndex, setQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [selectedAnswer, setSelectedAnswer] = useState(null);
 
+  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const currentInterest = selectedInterests[currentInterestIndex];
 
-  /*
-   * Temporary question engine.
-   *
-   * Later:
-   *
-   * React → FastAPI → AI Question Engine
-   *
-   * The AI will decide what question comes next.
-   */
+  // -------------------------------------------------------
+  // GET NEXT AI QUESTION
+  // -------------------------------------------------------
 
-  const getQuestions = (interest) => {
-    if (interest === "public-speaking") {
-      return [
-        {
-          id: "interest-level",
-          question: "How interested are you in Public Speaking?",
-          subtitle:
-            "Think about how much you genuinely enjoy speaking, presenting or expressing ideas.",
-          type: "scale",
-          options: [
-            { value: 1, label: "Not interested" },
-            { value: 2, label: "Slightly interested" },
-            { value: 3, label: "Moderately interested" },
-            { value: 4, label: "Very interested" },
-            { value: 5, label: "Extremely interested" },
-          ],
-        },
+  const fetchNextQuestion = async (
+    updatedAnswers = answers,
+    interest = currentInterest,
+  ) => {
+    setLoading(true);
+    setError("");
 
+    try {
+      const response = await fetch(
+        "http://localhost:8000/api/ai/next-question",
         {
-          id: "ability",
-          question: "How would you rate your current Public Speaking ability?",
-          subtitle:
-            "Be honest. This is about your current ability, not where you want to be.",
-          type: "scale",
-          options: [
-            { value: 1, label: "Beginner" },
-            { value: 2, label: "Developing" },
-            { value: 3, label: "Average" },
-            { value: 4, label: "Good" },
-            { value: 5, label: "Very confident" },
-          ],
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            student_id: studentId,
+            selected_interests: selectedInterests,
+            answers: updatedAnswers,
+            current_interest: interest,
+          }),
         },
+      );
 
-        {
-          id: "experience",
-          question:
-            "Have you ever participated in activities involving Public Speaking?",
-          subtitle: "Select the experiences that apply to you.",
-          type: "multiple",
-          options: [
-            { value: "presentation", label: "Classroom presentations" },
-            { value: "debate", label: "Debates" },
-            { value: "mun", label: "MUN" },
-            { value: "anchoring", label: "Anchoring / Hosting" },
-            { value: "competition", label: "Speaking competitions" },
-            { value: "none", label: "None so far" },
-          ],
-        },
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
 
-        {
-          id: "mun-experience",
-          question: "What did you enjoy most about your MUN experience?",
-          subtitle:
-            "Your previous answer tells us you have tried MUN. Let's understand what attracted you to it.",
-          type: "single",
-          condition: (previousAnswers) =>
-            previousAnswers.experience?.includes("mun"),
-          options: [
-            { value: "speaking", label: "Speaking and presenting" },
-            { value: "debate", label: "Debate and argumentation" },
-            { value: "research", label: "Research and preparation" },
-            { value: "negotiation", label: "Negotiation" },
-            { value: "teamwork", label: "Team interaction" },
-          ],
-        },
+        throw new Error(
+          errorData.detail || "Unable to generate the next question.",
+        );
+      }
 
-        {
-          id: "speaking-confidence",
-          question:
-            "How comfortable are you speaking without preparing beforehand?",
-          subtitle:
-            "For example, answering a question unexpectedly in front of a group.",
-          type: "scale",
-          options: [
-            { value: 1, label: "Very uncomfortable" },
-            { value: 2, label: "Uncomfortable" },
-            { value: 3, label: "Neutral" },
-            { value: 4, label: "Comfortable" },
-            { value: 5, label: "Very comfortable" },
-          ],
-        },
-      ];
+      const data = await response.json();
+
+      setCurrentQuestion(data);
+
+      // Restore answer if this question was already answered
+      if (updatedAnswers[data.question_id] !== undefined) {
+        setSelectedAnswer(updatedAnswers[data.question_id]);
+      } else {
+        setSelectedAnswer(null);
+      }
+    } catch (err) {
+      console.error("AI question error:", err);
+      setError(err.message || "Unable to load the question.");
+    } finally {
+      setLoading(false);
     }
-
-    return [
-      {
-        id: "general-interest",
-        question: `How interested are you in ${interest.replace("-", " ")}?`,
-        subtitle: "Tell us how strongly this area interests you.",
-        type: "scale",
-        options: [
-          { value: 1, label: "Not interested" },
-          { value: 2, label: "Slightly interested" },
-          { value: 3, label: "Moderately interested" },
-          { value: 4, label: "Very interested" },
-          { value: 5, label: "Extremely interested" },
-        ],
-      },
-    ];
   };
 
-  const allQuestions = getQuestions(currentInterest);
+  // -------------------------------------------------------
+  // INITIAL QUESTION
+  // -------------------------------------------------------
 
-  /*
-   * Remove conditional questions that don't apply.
-   */
-  const questions = allQuestions.filter((question) => {
-    if (!question.condition) {
-      return true;
-    }
+  useEffect(() => {
+    fetchNextQuestion({}, currentInterest);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    return question.condition(answers);
-  });
-
-  const currentQuestion = questions[questionIndex];
+  // -------------------------------------------------------
+  // SELECT OPTION
+  // -------------------------------------------------------
 
   const handleOptionClick = (value) => {
+    if (!currentQuestion) return;
+
     if (currentQuestion.type === "multiple") {
       setSelectedAnswer((current) => {
         const currentValues = Array.isArray(current) ? current : [];
@@ -163,7 +119,11 @@ function InterestQuestions() {
     setSelectedAnswer(value);
   };
 
-  const handleNext = () => {
+  // -------------------------------------------------------
+  // NEXT
+  // -------------------------------------------------------
+
+  const handleNext = async () => {
     if (
       selectedAnswer === null ||
       (Array.isArray(selectedAnswer) && selectedAnswer.length === 0)
@@ -171,60 +131,118 @@ function InterestQuestions() {
       return;
     }
 
+    const questionKey =
+      currentQuestion.question_id ||
+      currentQuestion.id ||
+      `question_${Object.keys(answers).length + 1}`;
+
     const updatedAnswers = {
       ...answers,
-      [currentQuestion.id]: selectedAnswer,
+      [questionKey]: selectedAnswer,
     };
 
     setAnswers(updatedAnswers);
 
-    if (questionIndex < questions.length - 1) {
-      setQuestionIndex(questionIndex + 1);
-      setSelectedAnswer(
-        updatedAnswers[questions[questionIndex + 1]?.id] || null,
-      );
+    // AI says this Interest+ session is finished
+    if (currentQuestion.is_final) {
+      navigate("/student/interest/result", {
+        state: {
+          selectedInterests,
+          answers: updatedAnswers,
+        },
+      });
 
       return;
     }
 
-    /*
-     * Current interest finished.
-     */
-    if (currentInterestIndex < selectedInterests.length - 1) {
-      setCurrentInterestIndex(currentInterestIndex + 1);
-      setQuestionIndex(0);
-      setSelectedAnswer(null);
-
-      return;
-    }
-
-    /*
-     * Temporary result.
-     * Later this will call the backend/AI.
-     */
-    console.log("Interest+ answers:", updatedAnswers);
-
-    navigate("/student/interest/result", {
-      state: {
-        selectedInterests,
-        answers: updatedAnswers,
-      },
-    });
+    // Ask AI for the next question
+    await fetchNextQuestion(updatedAnswers, currentInterest);
   };
+
+  // -------------------------------------------------------
+  // BACK
+  // -------------------------------------------------------
 
   const handleBack = () => {
-    if (questionIndex > 0) {
-      setQuestionIndex(questionIndex - 1);
-
-      const previousQuestion = questions[questionIndex - 1];
-
-      setSelectedAnswer(answers[previousQuestion.id] || null);
-
-      return;
-    }
-
     navigate("/student/interest");
   };
+
+  // -------------------------------------------------------
+  // LOADING
+  // -------------------------------------------------------
+
+  if (loading && !currentQuestion) {
+    return (
+      <div className="interest-questions-page">
+        <header className="questions-header">
+          <button className="questions-back" onClick={handleBack}>
+            <ArrowLeft size={17} />
+            Back
+          </button>
+
+          <div className="questions-brand">
+            <Sparkles size={18} />
+            Interest+
+          </div>
+        </header>
+
+        <main className="questions-main">
+          <section className="question-card">
+            <h1>Preparing your questions...</h1>
+            <p className="question-subtitle">
+              The AI is adapting the discovery experience to your interests.
+            </p>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
+  // -------------------------------------------------------
+  // ERROR
+  // -------------------------------------------------------
+
+  if (error && !currentQuestion) {
+    return (
+      <div className="interest-questions-page">
+        <header className="questions-header">
+          <button className="questions-back" onClick={handleBack}>
+            <ArrowLeft size={17} />
+            Back
+          </button>
+
+          <div className="questions-brand">
+            <Sparkles size={18} />
+            Interest+
+          </div>
+        </header>
+
+        <main className="questions-main">
+          <section className="question-card">
+            <h1>Unable to load the question</h1>
+
+            <p className="question-subtitle">{error}</p>
+
+            <div className="question-actions">
+              <button
+                className="question-next"
+                onClick={() => fetchNextQuestion(answers, currentInterest)}
+              >
+                Try Again
+                <ArrowRight size={17} />
+              </button>
+            </div>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
+  if (!currentQuestion) {
+    return null;
+  }
+
+  const options = currentQuestion.options || [];
 
   const isSelected = (value) => {
     if (Array.isArray(selectedAnswer)) {
@@ -233,8 +251,6 @@ function InterestQuestions() {
 
     return selectedAnswer === value;
   };
-
-  const progress = ((questionIndex + 1) / questions.length) * 100;
 
   return (
     <div className="interest-questions-page">
@@ -250,7 +266,7 @@ function InterestQuestions() {
         </div>
 
         <span className="questions-counter">
-          Question {questionIndex + 1} of {questions.length}
+          {loading ? "Thinking..." : "Adaptive Question"}
         </span>
       </header>
 
@@ -258,7 +274,9 @@ function InterestQuestions() {
         <div className="questions-progress">
           <div
             className="questions-progress-fill"
-            style={{ width: `${progress}%` }}
+            style={{
+              width: loading ? "60%" : "100%",
+            }}
           />
         </div>
 
@@ -269,6 +287,7 @@ function InterestQuestions() {
 
           <div>
             <span>EXPLORING</span>
+
             <strong>
               {currentInterest
                 .replace("-", " ")
@@ -278,14 +297,18 @@ function InterestQuestions() {
         </div>
 
         <section className="question-card">
-          <div className="question-number">0{questionIndex + 1}</div>
+          <div className="question-number">
+            {Object.keys(answers).length + 1 < 10
+              ? `0${Object.keys(answers).length + 1}`
+              : Object.keys(answers).length + 1}
+          </div>
 
           <h1>{currentQuestion.question}</h1>
 
           <p className="question-subtitle">{currentQuestion.subtitle}</p>
 
           <div className="question-options">
-            {currentQuestion.options.map((option) => {
+            {options.map((option) => {
               const selected = isSelected(option.value);
 
               return (
@@ -293,6 +316,7 @@ function InterestQuestions() {
                   key={option.value}
                   className={`question-option ${selected ? "selected" : ""}`}
                   onClick={() => handleOptionClick(option.value)}
+                  disabled={loading}
                 >
                   <span className="option-radio">
                     {selected && <Check size={14} />}
@@ -308,19 +332,23 @@ function InterestQuestions() {
             <span className="multiple-hint">You can select more than one.</span>
           )}
 
+          {error && <p className="question-subtitle">{error}</p>}
+
           <div className="question-actions">
             <button
               className="question-next"
               disabled={
+                loading ||
                 selectedAnswer === null ||
                 (Array.isArray(selectedAnswer) && selectedAnswer.length === 0)
               }
               onClick={handleNext}
             >
-              {questionIndex === questions.length - 1 &&
-              currentInterestIndex === selectedInterests.length - 1
-                ? "Complete"
-                : "Continue"}
+              {loading
+                ? "Generating..."
+                : currentQuestion.is_final
+                  ? "Complete"
+                  : "Continue"}
 
               <ArrowRight size={17} />
             </button>
@@ -329,7 +357,7 @@ function InterestQuestions() {
 
         <p className="adaptive-message">
           <Sparkles size={14} />
-          Your next question can change based on your answer.
+          Your next question changes based on your answers.
         </p>
       </main>
     </div>

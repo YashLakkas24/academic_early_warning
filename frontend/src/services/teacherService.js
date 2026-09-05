@@ -31,7 +31,6 @@ async function apiGet(path) {
   return response.json();
 }
 
-
 // =========================================================
 // ANALYTICS CACHE
 // =========================================================
@@ -46,7 +45,6 @@ async function apiGet(path) {
 //
 
 let analyticsCache = null;
-
 
 // =========================================================
 // GET TEACHER ANALYTICS
@@ -70,7 +68,6 @@ export async function getTeacherAnalytics() {
 
   return data;
 }
-
 
 // =========================================================
 // GET TEACHER PROFILE
@@ -100,22 +97,13 @@ export async function getTeacherProfile() {
   }
 
   return {
-    teacher_name:
-      user.full_name ||
-      user.name ||
-      "Teacher",
+    teacher_name: user.full_name || user.name || "Teacher",
 
-    teacher_id:
-      user.user_id ||
-      user.id ||
-      "",
+    teacher_id: user.user_id || user.id || "",
 
-    department:
-      user.department ||
-      "AI & Data Science",
+    department: user.department || "AI & Data Science",
   };
 }
-
 
 // =========================================================
 // GET RISK SUMMARY
@@ -139,7 +127,6 @@ export async function getRiskSummary() {
   };
 }
 
-
 // =========================================================
 // GET PERFORMANCE TREND
 // =========================================================
@@ -156,23 +143,13 @@ export async function getPerformanceTrend() {
   return allStudents.map((student) => ({
     student_id: student.student_id,
 
-    student_name:
-      student.student_name ||
-      student.name ||
-      "Unknown Student",
+    student_name: student.student_name || student.name || "Unknown Student",
 
-    trend_score:
-      student.trend_score ??
-      student.risk_score ??
-      0,
+    trend_score: student.trend_score ?? student.risk_score ?? 0,
 
-    trend:
-      student.performance_trend ||
-      student.trend ||
-      "STABLE",
+    trend: student.performance_trend || student.trend || "STABLE",
   }));
 }
-
 
 // =========================================================
 // GET STUDENTS BY RISK
@@ -186,43 +163,28 @@ export async function getPerformanceTrend() {
 //
 
 export async function getStudentsByRisk(riskLevel) {
-  const normalizedRisk = String(
-    riskLevel || ""
-  ).toUpperCase();
+  const normalizedRisk = String(riskLevel || "").toUpperCase();
 
   if (!["HIGH", "MEDIUM", "LOW"].includes(normalizedRisk)) {
-    throw new Error(
-      "Risk must be HIGH, MEDIUM or LOW."
-    );
+    throw new Error("Risk must be HIGH, MEDIUM or LOW.");
   }
 
   const data = await getTeacherAnalytics();
 
-  const students =
-    data?.students?.[normalizedRisk] || [];
+  const students = data?.students?.[normalizedRisk] || [];
 
   return students.map((student) => ({
     student_id: student.student_id,
 
-    student_name:
-      student.student_name ||
-      student.name ||
-      "Unknown Student",
+    student_name: student.student_name || student.name || "Unknown Student",
 
-    risk_level:
-      student.risk_level ||
-      normalizedRisk,
+    risk_level: student.risk_level || normalizedRisk,
 
-    risk_score:
-      student.risk_score ?? 0,
+    risk_score: student.risk_score ?? 0,
 
-    performance_trend:
-      student.performance_trend ||
-      student.trend ||
-      "STABLE",
+    performance_trend: student.performance_trend || student.trend || "STABLE",
   }));
 }
-
 
 // =========================================================
 // GET ONE STUDENT DETAILS
@@ -243,43 +205,38 @@ export async function getStudentsByRisk(riskLevel) {
 
 export async function getStudentDetails(studentId) {
   if (!studentId) {
-    throw new Error(
-      "Student ID is required."
-    );
+    throw new Error("Student ID is required.");
   }
 
   const data = await apiGet(
-    `/teacher/students/${encodeURIComponent(studentId)}`
+    `/teacher/students/${encodeURIComponent(studentId)}`,
   );
 
   // =======================================================
   // NORMALIZE INTERVENTION
   // =======================================================
 
-  const rawIntervention =
-    data?.intervention;
+  const rawIntervention = data?.intervention;
 
-  const interventionReasons =
-    Array.isArray(
-      rawIntervention?.reasons
-    )
+  const interventionReasons = Array.isArray(rawIntervention?.reasons)
+    ? rawIntervention.reasons
+    : typeof rawIntervention === "string"
       ? rawIntervention.reasons
+          .split("\n")
+          .map((reason) => reason.trim())
+          .filter(Boolean)
       : [];
 
   const interventionRecommendation =
-    typeof rawIntervention?.recommendation ===
-      "string"
+    typeof rawIntervention?.recommendation === "string"
       ? rawIntervention.recommendation.trim()
       : "";
-
 
   const intervention = {
     reasons: interventionReasons,
 
-    recommendation:
-      interventionRecommendation,
+    recommendation: interventionRecommendation,
   };
-
 
   // =======================================================
   // NORMALIZE AI SUGGESTION
@@ -298,35 +255,20 @@ export async function getStudentDetails(studentId) {
 
   let aiSuggestion = "";
 
-  if (
-    typeof data?.ai_analysis ===
-    "string"
-  ) {
+  if (typeof data?.ai_analysis === "string") {
+    aiSuggestion = data.ai_analysis.trim();
+  } else if (data?.ai_analysis && typeof data.ai_analysis === "object") {
     aiSuggestion =
-      data.ai_analysis.trim();
+      data.ai_analysis.recommendation || data.ai_analysis.suggestion || "";
   }
-
-  else if (
-    data?.ai_analysis &&
-    typeof data.ai_analysis ===
-    "object"
-  ) {
-    aiSuggestion =
-      data.ai_analysis.recommendation ||
-      data.ai_analysis.suggestion ||
-      "";
-  }
-
 
   // =======================================================
   // FALLBACK
   // =======================================================
 
   if (!aiSuggestion) {
-    aiSuggestion =
-      "AI analysis is currently unavailable.";
+    aiSuggestion = "AI analysis is currently unavailable.";
   }
-
 
   // =======================================================
   // FINAL NORMALIZED RESPONSE
@@ -344,33 +286,22 @@ export async function getStudentDetails(studentId) {
   //
 
   return {
-    student_id:
-      data.student_id,
+    student_id: data.student_id,
 
-    student_name:
-      data.student_name ||
-      "Unknown Student",
+    student_name: data.student_name || "Unknown Student",
 
-    risk_level:
-      data.risk_level ||
-      "LOW",
+    risk_level: data.risk_level || "LOW",
 
-    performance_trend:
-      data.performance_trend ||
-      "STABLE",
+    performance_trend: data.performance_trend || "STABLE",
+
+    analysis: typeof data.analysis === "string" ? data.analysis.trim() : "",
 
     intervention,
 
-    // Existing StudentDetail.jsx uses this
-    ai_analysis:
-      aiSuggestion,
-
     // Explicit name for future use
-    ai_suggestion:
-      aiSuggestion,
+    ai_suggestion: aiSuggestion,
   };
 }
-
 
 // =========================================================
 // CLEAR ANALYTICS CACHE
@@ -383,7 +314,6 @@ export async function getStudentDetails(studentId) {
 export function clearTeacherAnalyticsCache() {
   analyticsCache = null;
 }
-
 
 // =========================================================
 // OPTIONAL: FORCE REFRESH ANALYTICS
