@@ -4,7 +4,16 @@ import {
   ArrowRight,
   ArrowLeft,
   Sparkles,
-  Mic,
+  Landmark,
+  Cpu,
+  Code2,
+  Briefcase,
+  TrendingUp,
+  Palette,
+  HeartPulse,
+  GraduationCap,
+  Scale,
+  Megaphone,
   Puzzle,
   Target,
   CheckCircle2,
@@ -14,6 +23,24 @@ import { getStudentInterestAnalysis } from "../../services/studentService";
 
 import "./InterestResult.css";
 
+const INTEREST_ICON_MAP = {
+  "Government & Public Services": Landmark,
+  "IT & Technology": Cpu,
+  "Coding & Software": Code2,
+  "Business & Entrepreneurship": Briefcase,
+  "Finance": TrendingUp,
+  "Creative & Media": Palette,
+  "Healthcare": HeartPulse,
+  "Education": GraduationCap,
+  "Law": Scale,
+  "Marketing": Megaphone,
+};
+
+function InterestIcon({ interest, size = 25 }) {
+  const Icon = INTEREST_ICON_MAP[interest] || Sparkles;
+  return <Icon size={size} />;
+}
+
 function InterestResult() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -22,10 +49,6 @@ function InterestResult() {
   const [analysisData, setAnalysisData] = useState(initialAnalysis);
   const [loading, setLoading] = useState(!initialAnalysis);
   const [error, setError] = useState("");
-
-  const selectedInterests = location.state?.selectedInterests || [
-    "Coding & Software",
-  ];
 
   /*
    * Get the currently logged-in student's ID.
@@ -198,7 +221,7 @@ function InterestResult() {
         <section className="main-interest-card">
           <div className="main-interest-heading">
             <div className="main-interest-icon">
-              <Mic size={25} />
+              <InterestIcon interest={interestName} size={25} />
             </div>
 
             <div>

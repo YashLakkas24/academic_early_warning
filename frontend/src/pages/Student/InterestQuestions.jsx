@@ -24,9 +24,12 @@ function InterestQuestions() {
     location.state?.selectedInterests?.[0] ||
     "Coding & Software";
 
-  const interestName = primaryInterest
-    .replace(/-/g, " ")
-    .replace(/\b\w/g, (char) => char.toUpperCase());
+  const interestName =
+    typeof primaryInterest === "string" && primaryInterest.includes("-")
+      ? primaryInterest
+          .replace(/-/g, " ")
+          .replace(/\b\w/g, (char) => char.toUpperCase())
+      : primaryInterest || "Coding & Software";
 
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [questionNumber, setQuestionNumber] = useState(1);
