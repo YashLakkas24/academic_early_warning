@@ -218,7 +218,9 @@ function InterestQuestions() {
         <div className="questions-progress">
           <div
             className="questions-progress-fill"
-            style={{ width: `${progress}%` }}
+            style={{
+              width: loading ? "60%" : "100%",
+            }}
           />
         </div>
 
