@@ -406,21 +406,43 @@ function InterestResult() {
             </h2>
 
             <p>
-              Explore opportunities, identify skill
-              gaps and update your interests as you
-              gain new experiences.
+              Explore your personalized skill gap analysis, compare your skills against industry standards, and generate an AI-powered learning roadmap.
             </p>
           </div>
 
-          <button
-            className="profile-button"
-            onClick={() =>
-              navigate("/student/dashboard")
-            }
-          >
-            Go to Dashboard
-            <ArrowRight size={17} />
-          </button>
+          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
+            <button
+              className="profile-button"
+              onClick={() =>
+                navigate("/student/skills")
+              }
+            >
+              <Puzzle size={17} style={{ marginRight: "6px" }} />
+              Analyze Skill Gaps
+              <ArrowRight size={17} style={{ marginLeft: "6px" }} />
+            </button>
+
+            <button
+              className="profile-button"
+              style={{ background: "rgba(255, 255, 255, 0.08)", border: "1px solid rgba(255, 255, 255, 0.15)" }}
+              onClick={() =>
+                navigate("/student/roadmap")
+              }
+            >
+              <Sparkles size={17} style={{ marginRight: "6px" }} />
+              View Roadmap
+            </button>
+
+            <button
+              className="profile-button"
+              style={{ background: "transparent", border: "1px solid rgba(255, 255, 255, 0.1)" }}
+              onClick={() =>
+                navigate("/student/dashboard")
+              }
+            >
+              Dashboard
+            </button>
+          </div>
         </section>
       </main>
     </div>

@@ -20,15 +20,13 @@ OPENAI_MODEL = "gpt-5-nano"
 # OPENAI CLIENT
 # =========================================================
 
-api_key = os.getenv("OPENAI_API_KEY")
+api_key = os.getenv("GEMINI_API_KEY") or os.getenv("AI_KEY") or os.getenv("OPENAI_API_KEY")
+base_url = os.getenv("AI_BASE_URL") or "https://ai.tcetcercd.in/v1"
 
-client = (
-    OpenAI(
-        api_key=api_key,
-    )
-    if OPENAI_API_KEY
-    else None
-)
+client = OpenAI(
+    base_url=base_url,
+    api_key=api_key
+) if api_key else None
 
 # =========================================================
 # AI ANALYSIS
@@ -162,12 +160,15 @@ def generate_ai_analysis(student, risk_result):
         Write EXACTLY ONE short practical recommendation for
         faculty based ONLY on the supplied data.
 
-        Do not add any other sections.
-        """
+        if not api_key or not client:
+            return (
+                "AI analysis unavailable: "
+                "AI API key is not configured."
+            )
 
-    try:
+        model_name = os.getenv("AI_MODEL") or ("gemini-2.5-flash" if "generativelanguage" in base_url else "qwen3.6")
         response = client.chat.completions.create(
-            model=OPENAI_MODEL,
+            model=model_name,
             messages=[
                 {
                     "role": "system",
