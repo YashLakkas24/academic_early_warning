@@ -2,7 +2,8 @@ from pathlib import Path
 import sys
 
 import pandas as pd
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException,Depends
+from auth_dependencies import require_teacher
 
 
 # =========================================================
@@ -362,7 +363,7 @@ def get_student_from_csv(student_id):
 # =========================================================
 
 @router.post("/clear-cache")
-def clear_analysis_cache():
+def clear_analysis_cache(current_user:dict=Depends(require_teacher)):
 
     global analysis_cache
 
@@ -382,8 +383,10 @@ def clear_analysis_cache():
 # =========================================================
 
 @router.get("/report")
-def get_student_report():
-
+def get_student_report(
+    current_user:dict=Depends(require_teacher)
+    ):
+    
     if not CSV_PATH.exists():
 
         raise HTTPException(
@@ -423,7 +426,7 @@ def get_student_report():
 # =========================================================
 
 @router.get("/analytics")
-def get_teacher_analytics():
+def get_teacher_analytics(current_user:dict=Depends(require_teacher)):
 
    
 
@@ -516,7 +519,7 @@ def get_teacher_analytics():
 # =========================================================
 
 @router.get("/risk-summary")
-def get_risk_summary():
+def get_risk_summary(current_user:dict=Depends(require_teacher)):
 
     results = load_analysis()
 
@@ -552,7 +555,7 @@ def get_risk_summary():
 # =========================================================
 
 @router.get("/performance-trend")
-def get_performance_trend():
+def get_performance_trend(current_user:dict=Depends(require_teacher)):
 
     results = load_analysis()
 
@@ -590,7 +593,8 @@ def get_performance_trend():
 
 @router.get("/students")
 def get_students_by_risk(
-    risk: str
+    risk: str,
+    current_user:dict=Depends(require_teacher)
 ):
 
     risk = risk.upper()
@@ -656,7 +660,8 @@ def get_students_by_risk(
     "/students/{student_id}"
 )
 def get_student_details(
-    student_id: str
+    student_id: str,
+    current_user:dict=Depends(require_teacher)
 ):
 
     # -----------------------------------------------------
