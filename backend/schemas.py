@@ -9,3 +9,4 @@ class LoginResponse(BaseModel):
     user_id:str
     full_name:str # what fastapi will return after successful login
     role:str
+    firebase_token: str

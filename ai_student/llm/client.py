@@ -6,7 +6,12 @@ from openai import OpenAI
 # Project root
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 ENV_PATH = PROJECT_ROOT / ".env"
-load_dotenv(dotenv_path=ENV_PATH, override=True)
+BACKEND_ENV_PATH = PROJECT_ROOT / "backend" / ".env"
+
+if ENV_PATH.exists():
+    load_dotenv(dotenv_path=ENV_PATH, override=True)
+if BACKEND_ENV_PATH.exists():
+    load_dotenv(dotenv_path=BACKEND_ENV_PATH, override=False)
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 AI_BASE_URL = os.getenv("AI_BASE_URL")

@@ -385,7 +385,9 @@ function InterestQuestions() {
                 onClick={handleNext}
               >
                 {submitting
-                  ? "AI Thinking..."
+                  ? questionNumber >= totalQuestions
+                    ? "Generating AI Analysis..."
+                    : "AI Thinking..."
                   : questionNumber >= totalQuestions
                   ? "Finish Assessment"
                   : "Continue"}
@@ -397,7 +399,7 @@ function InterestQuestions() {
 
         <p className="adaptive-message">
           <Sparkles size={14} />
-          Questions adapt dynamically to your answers using Qwen AI.
+          Adaptive AI questions tailored in real time to your responses.
         </p>
       </main>
     </div>

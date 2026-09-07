@@ -20,6 +20,8 @@ def analyze_student(student):
     return result
 
 
+def analyze_dataset(df):
+
 def generate_student_ai_analysis(student):
     """
     Generate AI analysis for one selected student.
