@@ -644,8 +644,13 @@
 }
 
 @keyframes skeleton-shimmer {
-  0% { background-position: 100% 50%; }
-  100% { background-position: 0 50%; }
+  0% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0 50%;
+  }
 }
 
 .skeleton-block {
@@ -796,8 +801,33 @@
     opacity: 0;
     transform: translateY(6px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.logout-btn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #dc2626;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.logout-btn:hover {
+  opacity: 0.9;
+}
+
+.logout-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

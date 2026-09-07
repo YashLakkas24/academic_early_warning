@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 import {
   getStudentProfile,
   getStudentInterestAnalysis,
-} from "../../services/studentService"; 
+} from "../../services/studentService";
 
 import {
   LayoutDashboard,
@@ -137,9 +137,8 @@ function StudentDashboard() {
             return (
               <button
                 key={item.id}
-                className={`student-nav-item ${
-                  activePage === item.id ? "active" : ""
-                } ${item.highlight ? "interest-nav" : ""}`}
+                className={`student-nav-item ${activePage === item.id ? "active" : ""
+                  } ${item.highlight ? "interest-nav" : ""}`}
                 onClick={() => {
                   if (item.id === "interest") {
                     navigate("/student/interest");
@@ -171,7 +170,7 @@ function StudentDashboard() {
             className="student-nav-item logout-item"
             onClick={() => {
               localStorage.removeItem("user");
-              navigate("/login");
+              navigate("/");
             }}
           >
             <LogOut size={19} />

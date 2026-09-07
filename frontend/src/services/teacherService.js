@@ -1,15 +1,30 @@
-const API_BASE_URL = "http://127.0.0.1:8000/api";
+import { getAuth } from "firebase/auth";
+import app from "../firebase";
 
+const API_BASE_URL = "http://127.0.0.1:8000/api";
+const auth = getAuth(app);
+
+async function getAuthHeaders() {
+  const currentUser = auth.currentUser;
+
+  if (!currentUser) {
+    throw new Error("You are not authenticated. Please log in again.");
+  }
+
+  const token = await currentUser.getIdToken();
+
+  return {
+    Accept: "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+}
 // =========================================================
 // BASIC GET REQUEST
 // =========================================================
-
 async function apiGet(path) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: "GET",
-    headers: {
-      Accept: "application/json",
-    },
+    headers: await getAuthHeaders(),
   });
 
   if (!response.ok) {
@@ -186,6 +201,7 @@ export async function getStudentsByRisk(riskLevel) {
   }));
 }
 
+
 // =========================================================
 // GET ONE STUDENT DETAILS
 // =========================================================
@@ -201,7 +217,7 @@ export async function getStudentsByRisk(riskLevel) {
 // Risk list       -> NO AI
 // Click Arjun     -> AI runs for Arjun only
 // Click Sneha     -> AI runs for Sneha only
-//
+
 
 export async function getStudentDetails(studentId) {
   if (!studentId) {
@@ -222,9 +238,9 @@ export async function getStudentDetails(studentId) {
     ? rawIntervention.reasons
     : typeof rawIntervention === "string"
       ? rawIntervention.reasons
-          .split("\n")
-          .map((reason) => reason.trim())
-          .filter(Boolean)
+        .split("\n")
+        .map((reason) => reason.trim())
+        .filter(Boolean)
       : [];
 
   const interventionRecommendation =
@@ -241,17 +257,7 @@ export async function getStudentDetails(studentId) {
   // =======================================================
   // NORMALIZE AI SUGGESTION
   // =======================================================
-  //
-  // Your backend currently returns:
-  //
-  // "ai_analysis":
-  // "Implement a structured study plan..."
-  //
-  // Therefore we MUST preserve that string.
-  //
-  // We also support an object response in case the
-  // backend is changed later.
-  //
+
 
   let aiSuggestion = "";
 

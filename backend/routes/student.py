@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from database import SessionLocal
 from models import Student
-
+from auth_dependencies import require_student
 router = APIRouter(
     prefix="/api/students",
     tags=["Students"]
@@ -22,8 +22,14 @@ def get_db():
 @router.get("/{student_id}")
 def get_student(
     student_id: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user=Depends(require_student)
 ):
+    if current_user.get("uid") != student_id:
+        raise HTTPException(
+            status_code=403,
+            detail="You can only access your own student profile"
+        )
     student = (
         db.query(Student)
         .filter(Student.student_id == student_id)
