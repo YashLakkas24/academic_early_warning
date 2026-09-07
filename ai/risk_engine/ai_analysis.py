@@ -20,11 +20,9 @@ OPENAI_MODEL = "gpt-5-nano"
 # OPENAI CLIENT
 # =========================================================
 
-api_key = os.getenv("GEMINI_API_KEY") or os.getenv("AI_KEY") or os.getenv("OPENAI_API_KEY")
-base_url = os.getenv("AI_BASE_URL") or "https://ai.tcetcercd.in/v1"
+api_key = OPENAI_API_KEY
 
 client = OpenAI(
-    base_url=base_url,
     api_key=api_key
 ) if api_key else None
 
@@ -159,16 +157,17 @@ def generate_ai_analysis(student, risk_result):
         AI Suggestion:
         Write EXACTLY ONE short practical recommendation for
         faculty based ONLY on the supplied data.
+        """
 
-        if not api_key or not client:
-            return (
-                "AI analysis unavailable: "
-                "AI API key is not configured."
-            )
+    if not api_key or not client:
+        return (
+            "AI analysis unavailable: "
+            "AI API key is not configured."
+        )
 
-        model_name = os.getenv("AI_MODEL") or ("gemini-2.5-flash" if "generativelanguage" in base_url else "qwen3.6")
+    try:
         response = client.chat.completions.create(
-            model=model_name,
+            model=OPENAI_MODEL,
             messages=[
                 {
                     "role": "system",
@@ -193,9 +192,15 @@ def generate_ai_analysis(student, risk_result):
         content = response.choices[0].message.content
 
         if not content:
-            return "AI analysis unavailable: " "The AI returned an empty response."
+            return (
+                "AI analysis unavailable: "
+                "The AI returned an empty response."
+            )
 
         return content.strip()
 
     except Exception as exc:
-        return "AI analysis unavailable.\n" f"AI error: {type(exc).__name__}: {exc}"
+        return (
+            "AI analysis unavailable.\n"
+            f"AI error: {type(exc).__name__}: {exc}"
+        )
