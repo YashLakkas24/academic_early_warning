@@ -42,7 +42,14 @@ function InterestQuestions() {
   const getStudentId = () => {
     try {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
-      return user.student_id || user.user_id || "STU001";
+      // return user.student_id || user.user_id || "STU001";
+      const studentId = user.student_id || user.user_id;
+
+      if (!studentId) {
+        throw new Error("Student ID not found. Please login again.");
+      }
+
+      return studentId;
     } catch {
       return "STU001";
     }
@@ -62,7 +69,7 @@ function InterestQuestions() {
       const response = await startInterestSession(
         studentId,
         interestName,
-        resetSession
+        resetSession,
       );
 
       if (response.completed) {
@@ -88,7 +95,7 @@ function InterestQuestions() {
       console.error("Failed to start AI interest session:", err);
       setError(
         err.message ||
-          "Could not connect to the AI service. Please check your backend connection."
+          "Could not connect to the AI service. Please check your backend connection.",
       );
     } finally {
       setLoading(false);
@@ -174,7 +181,7 @@ function InterestQuestions() {
       console.error("Failed to submit answer to AI:", err);
       setError(
         err.message ||
-          "Failed to process your response. Please try submitting again."
+          "Failed to process your response. Please try submitting again.",
       );
     } finally {
       setSubmitting(false);
@@ -189,7 +196,7 @@ function InterestQuestions() {
 
   const progress = Math.min(
     100,
-    Math.round((questionNumber / totalQuestions) * 100)
+    Math.round((questionNumber / totalQuestions) * 100),
   );
 
   return (
@@ -253,7 +260,8 @@ function InterestQuestions() {
             <div className="ai-spinner" />
             <h2>Connecting with AI...</h2>
             <p className="question-subtitle">
-              Generating your personalized adaptive questions for {interestName}.
+              Generating your personalized adaptive questions for {interestName}
+              .
             </p>
           </section>
         ) : currentQuestion ? (
@@ -354,7 +362,7 @@ function InterestQuestions() {
 
             {/* Default options fallback if response_type is undefined */}
             {!["scale", "multiple_choice", "single_choice", "text"].includes(
-              currentQuestion.response_type
+              currentQuestion.response_type,
             ) &&
               currentQuestion.options &&
               currentQuestion.options.length > 0 && (
@@ -389,8 +397,8 @@ function InterestQuestions() {
                     ? "Generating AI Analysis..."
                     : "AI Thinking..."
                   : questionNumber >= totalQuestions
-                  ? "Finish Assessment"
-                  : "Continue"}
+                    ? "Finish Assessment"
+                    : "Continue"}
                 <ArrowRight size={17} />
               </button>
             </div>
