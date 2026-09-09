@@ -60,7 +60,7 @@ export const navigationJourneyStages = [
     id: "discovery",
     title: "Adaptive Discovery",
     description:
-      "Up to 5 adaptive questions. Gemini dynamically selects the next question based on what the student has already revealed — there is no fixed question sequence.",
+      "Up to 5 adaptive questions. AI dynamically selects the next question based on what the student has already revealed — there is no fixed question sequence.",
   },
   {
     id: "analysis",

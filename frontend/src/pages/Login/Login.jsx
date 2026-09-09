@@ -78,10 +78,10 @@ function Login() {
           navigate("/");
         }}
       >
-        <span className="login-page__mark" aria-hidden="true">
+        <span className="navbar__mark" aria-hidden="true">
           <Activity size={18} strokeWidth={2.4} />
         </span>
-        <span>Academic Early Warning</span>
+        <span>E.A.R.N</span>
       </a>
 
       <div className="login-card">

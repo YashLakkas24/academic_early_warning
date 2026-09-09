@@ -14,17 +14,14 @@ ENV_PATH = PROJECT_ROOT / ".env"
 load_dotenv(dotenv_path=ENV_PATH, override=True)
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_MODEL = "gpt-5-nano"
-
+OPENAI_MODEL = "gpt-5.4-mini"
 # =========================================================
 # OPENAI CLIENT
 # =========================================================
 
 api_key = OPENAI_API_KEY
 
-client = OpenAI(
-    api_key=api_key
-) if api_key else None
+client = OpenAI(api_key=api_key) if api_key else None
 
 # =========================================================
 # AI ANALYSIS
@@ -160,14 +157,12 @@ def generate_ai_analysis(student, risk_result):
         """
 
     if not api_key or not client:
-        return (
-            "AI analysis unavailable: "
-            "AI API key is not configured."
-        )
+        return "AI analysis unavailable: " "AI API key is not configured."
 
     try:
         response = client.chat.completions.create(
             model=OPENAI_MODEL,
+            reasoning_effort="low",
             messages=[
                 {
                     "role": "system",
@@ -192,15 +187,9 @@ def generate_ai_analysis(student, risk_result):
         content = response.choices[0].message.content
 
         if not content:
-            return (
-                "AI analysis unavailable: "
-                "The AI returned an empty response."
-            )
+            return "AI analysis unavailable: " "The AI returned an empty response."
 
         return content.strip()
 
     except Exception as exc:
-        return (
-            "AI analysis unavailable.\n"
-            f"AI error: {type(exc).__name__}: {exc}"
-        )
+        return "AI analysis unavailable.\n" f"AI error: {type(exc).__name__}: {exc}"

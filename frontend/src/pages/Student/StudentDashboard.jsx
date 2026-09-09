@@ -11,7 +11,6 @@ import {
   Sparkles,
   Puzzle,
   Compass,
-  Target,
   LogOut,
   GraduationCap,
   CalendarCheck,
@@ -108,11 +107,6 @@ function StudentDashboard() {
       label: "AI Roadmap",
       icon: Compass,
     },
-    {
-      id: "opportunities",
-      label: "Opportunities",
-      icon: Target,
-    },
   ];
 
   return (
@@ -137,17 +131,20 @@ function StudentDashboard() {
             return (
               <button
                 key={item.id}
-                className={`student-nav-item ${activePage === item.id ? "active" : ""
-                  } ${item.highlight ? "interest-nav" : ""}`}
+                className={`student-nav-item ${
+                  activePage === item.id ? "active" : ""
+                } ${item.highlight ? "interest-nav" : ""}`}
                 onClick={() => {
                   if (item.id === "interest") {
                     navigate("/student/interest");
                     return;
                   }
+
                   if (item.id === "skills") {
                     navigate("/student/skills");
                     return;
                   }
+
                   if (item.id === "roadmap") {
                     navigate("/student/roadmap");
                     return;
@@ -188,9 +185,7 @@ function StudentDashboard() {
 
             <h1>Welcome back, {student.name.split(" ")[0]} 👋</h1>
 
-            <p>
-              Here's an overview of your academic journey and opportunities.
-            </p>
+            <p>Here's an overview of your academic journey.</p>
           </div>
 
           <div className="student-profile-mini">
@@ -213,7 +208,8 @@ function StudentDashboard() {
             <h2>{student.name}</h2>
 
             <p>
-              {student.studentId} · Roll {student.rollNumber} · {student.branch} · {student.year}
+              {student.studentId} · Roll {student.rollNumber} · {student.branch}{" "}
+              · {student.year}
             </p>
           </div>
 
@@ -294,7 +290,14 @@ function StudentDashboard() {
                   "Discover what genuinely interests you through adaptive questions. Your responses help us understand your interests, experience and areas worth exploring."}
               </p>
 
-              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "12px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "10px",
+                  flexWrap: "wrap",
+                  marginTop: "12px",
+                }}
+              >
                 {interestAnalysis ? (
                   <>
                     <button
@@ -304,9 +307,13 @@ function StudentDashboard() {
                       View Full Analysis
                       <ChevronRight size={17} />
                     </button>
+
                     <button
                       className="primary-action"
-                      style={{ background: "rgba(255, 255, 255, 0.08)", border: "1px solid rgba(255, 255, 255, 0.15)" }}
+                      style={{
+                        background: "rgba(255, 255, 255, 0.08)",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                      }}
                       onClick={() => navigate("/student/interest")}
                     >
                       Explore New Interest
@@ -333,13 +340,22 @@ function StudentDashboard() {
 
         {/* Lower cards */}
         <section className="dashboard-grid">
+          {/* Skill Gaps */}
           <div className="feature-card">
             <div className="feature-card-top">
               <div className="feature-icon">
                 <Puzzle size={21} />
               </div>
 
-              <span className="coming-soon" style={{ background: "rgba(59, 130, 246, 0.2)", color: "#93c5fd" }}>AI INSIGHTS</span>
+              <span
+                className="coming-soon"
+                style={{
+                  background: "rgba(59, 130, 246, 0.2)",
+                  color: "#93c5fd",
+                }}
+              >
+                AI INSIGHTS
+              </span>
             </div>
 
             <h3>Skill Gaps</h3>
@@ -355,13 +371,22 @@ function StudentDashboard() {
             </button>
           </div>
 
+          {/* AI Roadmap */}
           <div className="feature-card">
             <div className="feature-card-top">
               <div className="feature-icon">
                 <Compass size={21} />
               </div>
 
-              <span className="coming-soon" style={{ background: "rgba(168, 85, 247, 0.2)", color: "#d8b4fe" }}>PERSONALIZED</span>
+              <span
+                className="coming-soon"
+                style={{
+                  background: "rgba(168, 85, 247, 0.2)",
+                  color: "#d8b4fe",
+                }}
+              >
+                PERSONALIZED
+              </span>
             </div>
 
             <h3>AI Roadmap</h3>
@@ -373,28 +398,6 @@ function StudentDashboard() {
 
             <button onClick={() => navigate("/student/roadmap")}>
               View Roadmap
-              <ChevronRight size={16} />
-            </button>
-          </div>
-
-          <div className="feature-card">
-            <div className="feature-card-top">
-              <div className="feature-icon">
-                <Target size={21} />
-              </div>
-
-              <span className="coming-soon">COMING SOON</span>
-            </div>
-
-            <h3>Opportunities</h3>
-
-            <p>
-              Find workshops, competitions, events and other opportunities
-              relevant to your profile.
-            </p>
-
-            <button onClick={() => setActivePage("opportunities")}>
-              View Opportunities
               <ChevronRight size={16} />
             </button>
           </div>

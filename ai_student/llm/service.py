@@ -38,20 +38,14 @@ from ai_student.career_pivot.schemas import (
     TransitionRoadmapResult,
 )
 
-
 # ============================================================
-# GEMINI / LLM MODEL CONFIGURATION
+# OPENAI MODEL CONFIGURATION
 # ============================================================
 
-DEFAULT_MODEL = os.getenv("AI_MODEL", "gemini-3.6-flash")
+DEFAULT_MODEL = os.getenv("AI_MODEL", "gpt-5.4-mini")
 
 VALID_MODELS = [
     DEFAULT_MODEL,
-    "gemini-3.6-flash",
-    "gemini-3.5-flash",
-    "gemini-3.5-flash-lite",
-    "gemini-3.7-flash",
-    "gemini-3.8-flash",
 ]
 # Remove duplicates while preserving order
 VALID_MODELS = list(dict.fromkeys(VALID_MODELS))
@@ -80,243 +74,74 @@ def parse_json_from_llm(content: str) -> dict:
 
     if start_obj != -1 and end_obj != -1 and end_obj > start_obj:
         if start_arr == -1 or start_obj < start_arr:
-            content = content[start_obj:end_obj + 1].strip()
+            content = content[start_obj : end_obj + 1].strip()
         elif end_arr > start_arr:
-            content = content[start_arr:end_arr + 1].strip()
+            content = content[start_arr : end_arr + 1].strip()
     elif start_arr != -1 and end_arr != -1 and end_arr > start_arr:
-        content = content[start_arr:end_arr + 1].strip()
+        content = content[start_arr : end_arr + 1].strip()
 
     return json.loads(content)
 
 
 # ============================================================
-# RESILIENT GEMINI LLM CALL
+# OPENAI LLM CALL
 # ============================================================
+
 
 def safe_chat_completion(**kwargs):
     """
-    Centralized Gemini API call with model failover.
+    Centralized OpenAI API call.
 
-    Behaviour:
-
-    404
-        Model unavailable -> immediately try next model.
-
-    Daily/free-tier quota
-        Model quota exhausted -> immediately try next model.
-
-    Temporary 429 / 500 / 502 / 503 / 504
-        Retry a few times with increasing delay.
-
-    Other errors
-        Raise immediately.
-
-    This keeps all pipeline functions independent of
-    Gemini model-specific failures.
+    Uses GPT-5.4 mini as the single model.
+    Retries temporary API/server errors.
+    Does not perform model fallback or free-tier quota handling.
     """
 
     max_retries = 3
-    base_delay = 3.0
+    base_delay = 2.0
 
-    # Default to json_object response_format for structured outputs
-    kwargs.setdefault("response_format", {"type": "json_object"})
+    kwargs["model"] = kwargs.get("model", DEFAULT_MODEL)
 
-    # Determine starting model
-    requested_model = kwargs.get("model", DEFAULT_MODEL)
+    # Use JSON output by default for our structured AI responses.
+    kwargs.setdefault(
+        "response_format",
+        {"type": "json_object"},
+    )
 
-    # Start with requested model, then try every valid fallback.
-    models_to_try = [
-        requested_model
-    ] + [
-        model
-        for model in VALID_MODELS
-        if model != requested_model
-    ]
+    for attempt in range(max_retries):
+        try:
+            response = client.chat.completions.create(**kwargs)
 
-    last_exception = None
+            return response
 
-    # --------------------------------------------------------
-    # Try each model
-    # --------------------------------------------------------
+        except NotFoundError:
+            # Model/configuration problem.
+            # Retrying will not fix it.
+            raise
 
-    for current_model in models_to_try:
+        except (
+            RateLimitError,
+            InternalServerError,
+            APIConnectionError,
+        ) as e:
 
-        kwargs["model"] = current_model
-
-        print(
-            f"\n[Gemini] Trying model: {current_model}",
-            flush=True,
-        )
-
-        # ----------------------------------------------------
-        # Retry temporary errors for this model
-        # ----------------------------------------------------
-
-        for attempt in range(max_retries):
-
-            try:
-
-                response = client.chat.completions.create(
-                    **kwargs
-                )
-
-                print(
-                    f"[Gemini] Success: {current_model}",
-                    flush=True,
-                )
-
-                return response
-
-            except (
-                RateLimitError,
-                InternalServerError,
-                APIConnectionError,
-                NotFoundError,
-                APIError,
-            ) as e:
-
-                last_exception = e
-
-                status_code = getattr(
-                    e,
-                    "status_code",
-                    None,
-                )
-
-                error_text = str(e).lower()
-
-                # =================================================
-                # CASE 1 — MODEL DOES NOT EXIST / NOT SUPPORTED
-                # =================================================
-
-                if (
-                    isinstance(e, NotFoundError)
-                    or status_code == 404
-                    or "not found" in error_text
-                    or "not supported" in error_text
-                ):
-
-                    print(
-                        f"[Gemini] Model '{current_model}' "
-                        f"is unavailable. Trying next model...",
-                        flush=True,
-                    )
-
-                    # Do NOT retry this model.
-                    break
-
-                # =================================================
-                # CASE 2 — DAILY / FREE-TIER QUOTA EXHAUSTED
-                # =================================================
-
-                daily_quota_indicators = (
-                    "requests per day",
-                    "request per day",
-                    "per day",
-                    "daily",
-                    "rpd",
-                    "generate_content_free_tier_requests",
-                    "daily limit",
-                    "quota exceeded",
-                    "quotaexceeded",
-                )
-
-                is_daily_quota = any(
-                    indicator in error_text
-                    for indicator in daily_quota_indicators
-                )
-
-                if is_daily_quota:
-
-                    print(
-                        f"[Gemini] Daily/free-tier quota reached "
-                        f"for '{current_model}'. "
-                        f"Switching to next model...",
-                        flush=True,
-                    )
-
-                    # Do NOT waste time retrying a quota that
-                    # will not reset during these few seconds.
-                    break
-
-                # =================================================
-                # CASE 3 — TEMPORARY RATE LIMIT / SERVER ERROR
-                # =================================================
-
-                is_temporary_error = (
-                    isinstance(
-                        e,
-                        (
-                            RateLimitError,
-                            InternalServerError,
-                            APIConnectionError,
-                        ),
-                    )
-                    or status_code in (
-                        429,
-                        500,
-                        502,
-                        503,
-                        504,
-                    )
-                    or "429" in error_text
-                    or "500" in error_text
-                    or "502" in error_text
-                    or "503" in error_text
-                    or "504" in error_text
-                    or "high demand" in error_text
-                    or "temporarily unavailable" in error_text
-                )
-
-                if is_temporary_error:
-
-                    sleep_time = base_delay * (
-                        attempt + 1
-                    )
-
-                    print(
-                        f"[Gemini] Temporary error from "
-                        f"'{current_model}' "
-                        f"(HTTP {status_code or 'unknown'}). "
-                        f"Retrying in "
-                        f"{sleep_time:.0f}s "
-                        f"(attempt {attempt + 1}/"
-                        f"{max_retries})...",
-                        flush=True,
-                    )
-
-                    time.sleep(sleep_time)
-
-                    continue
-
-                # =================================================
-                # CASE 4 — UNKNOWN / NON-RETRYABLE ERROR
-                # =================================================
-
-                print(
-                    f"[Gemini] Non-retryable error "
-                    f"from '{current_model}':",
-                    flush=True,
-                )
-
+            if attempt == max_retries - 1:
                 raise
 
-    # =========================================================
-    # ALL MODELS FAILED
-    # =========================================================
+            sleep_time = base_delay * (attempt + 1)
 
-    if last_exception is not None:
+            print(
+                f"[OpenAI] Temporary error "
+                f"(attempt {attempt + 1}/{max_retries}). "
+                f"Retrying in {sleep_time:.0f}s...",
+                flush=True,
+            )
 
-        print(
-            "\n[Gemini] All configured models failed.",
-            flush=True,
-        )
+            time.sleep(sleep_time)
 
-        raise last_exception
-
-    raise RuntimeError(
-        "Gemini request failed without an exception."
-    )
+        except APIError:
+            # Other OpenAI API errors should be surfaced directly.
+            raise
 
 
 MAX_QUESTIONS = 5
@@ -325,6 +150,7 @@ MAX_QUESTIONS = 5
 # ============================================================
 # ADAPTIVE QUESTION GENERATION
 # ============================================================
+
 
 def generate_next_question(
     interest: str,
@@ -414,7 +240,7 @@ Do not use markdown code fences. Return ONLY valid JSON.
                 "content": user_prompt,
             },
         ],
-        max_tokens=2000,
+        max_completion_tokens=2000,
         response_format={
             "type": "json_object",
         },
@@ -433,9 +259,7 @@ Do not use markdown code fences. Return ONLY valid JSON.
     )
 
     if content is None:
-        raise ValueError(
-            "AI returned an empty response."
-        )
+        raise ValueError("AI returned an empty response.")
 
     content = content.strip()
 
@@ -445,9 +269,9 @@ Do not use markdown code fences. Return ONLY valid JSON.
 
     if content.startswith("```"):
         if content.startswith("```json"):
-            content = content[len("```json"):].strip()
+            content = content[len("```json") :].strip()
         else:
-            content = content[len("```"):].strip()
+            content = content[len("```") :].strip()
 
         if content.endswith("```"):
             content = content[:-3].strip()
@@ -461,9 +285,7 @@ Do not use markdown code fences. Return ONLY valid JSON.
         "max_tokens",
         "MAX_TOKENS",
     ):
-        raise ValueError(
-            "AI stopped generating because output reached token limit."
-        )
+        raise ValueError("AI stopped generating because output reached token limit.")
 
     # ========================================================
     # PARSE JSON
@@ -485,10 +307,19 @@ Do not use markdown code fences. Return ONLY valid JSON.
             # If AI mistakenly flagged completion early, force a valid fallback question structure
             data["completed"] = False
             if not data.get("question"):
-                data["question"] = f"What specific area in {interest} would you like to explore next?"
+                data["question"] = (
+                    f"What specific area in {interest} would you like to explore next?"
+                )
                 data["response_type"] = "single_choice"
-                data["options"] = ["Foundational Skills", "Hands-on Projects", "Industry Practices", "Advanced Concepts"]
-                data["question_id"] = f"q{question_number}_{interest.lower().replace(' ', '_')}"
+                data["options"] = [
+                    "Foundational Skills",
+                    "Hands-on Projects",
+                    "Industry Practices",
+                    "Advanced Concepts",
+                ]
+                data["question_id"] = (
+                    f"q{question_number}_{interest.lower().replace(' ', '_')}"
+                )
 
     # ========================================================
     # VALIDATE GENERATED QUESTION
@@ -512,6 +343,7 @@ Do not use markdown code fences. Return ONLY valid JSON.
 # FINAL INTEREST ANALYSIS
 # ============================================================
 
+
 def generate_interest_analysis(
     system_prompt: str,
     user_prompt: str,
@@ -530,18 +362,18 @@ def generate_interest_analysis(
                 "content": user_prompt,
             },
         ],
-        max_tokens=3000,
+        max_completion_tokens=3000,
         response_format={"type": "json_object"},
     )
 
-    finish_reason = getattr( 
-        response.choices[0], 
-        "finish_reason", 
-        None, 
-    ) 
-    print( 
-        f"[Gemini] Interest Analysis finish reason: {finish_reason}", 
-        flush=True, 
+    finish_reason = getattr(
+        response.choices[0],
+        "finish_reason",
+        None,
+    )
+    print(
+        f"[Gemini] Interest Analysis finish reason: {finish_reason}",
+        flush=True,
     )
 
     content = response.choices[0].message.content.strip()
@@ -551,8 +383,7 @@ def generate_interest_analysis(
 
     except Exception as e:
         raise ValueError(
-            "LLM did not return valid JSON.\n\n"
-            f"Response:\n{content}"
+            "LLM did not return valid JSON.\n\n" f"Response:\n{content}"
         ) from e
 
     try:
@@ -560,15 +391,14 @@ def generate_interest_analysis(
 
     except Exception as e:
         raise ValueError(
-            "LLM output does not match "
-            "InterestAnalysis schema.\n\n"
-            f"Data:\n{data}"
+            "LLM output does not match " "InterestAnalysis schema.\n\n" f"Data:\n{data}"
         ) from e
 
 
 # ============================================================
 # CAREER DIRECTION DISCOVERY
 # ============================================================
+
 
 def generate_direction_discovery(
     interest: str,
@@ -614,7 +444,7 @@ Return ONLY valid JSON.
                 "content": user_prompt,
             },
         ],
-        max_tokens=4000,
+        max_completion_tokens=4000,
     )
 
     content = response.choices[0].message.content.strip()
@@ -643,6 +473,7 @@ Return ONLY valid JSON.
 # ============================================================
 # CAREER SKILL DISCOVERY
 # ============================================================
+
 
 def generate_skill_discovery(
     direction: str,
@@ -720,7 +551,7 @@ Return ONLY valid JSON in this structure:
                 "content": user_prompt,
             },
         ],
-        max_tokens=4000,
+        max_completion_tokens=4000,
         response_format={
             "type": "json_object",
         },
@@ -739,15 +570,12 @@ Return ONLY valid JSON in this structure:
     )
 
     print(
-        f"\n[Gemini] Skill Discovery finish reason: "
-        f"{finish_reason}",
+        f"\n[Gemini] Skill Discovery finish reason: " f"{finish_reason}",
         flush=True,
     )
 
     if content is None:
-        raise ValueError(
-            "Gemini returned an empty response for skill discovery."
-        )
+        raise ValueError("Gemini returned an empty response for skill discovery.")
 
     content = content.strip()
 
@@ -790,9 +618,11 @@ Return ONLY valid JSON in this structure:
             f"Data:\n{data}"
         ) from e
 
+
 # ============================================================
 # STAGE 3 — SKILL ASSESSMENT
 # ============================================================
+
 
 def generate_skill_assessment(
     direction: str,
@@ -907,7 +737,7 @@ Return ONLY valid JSON.
                 "content": user_prompt,
             },
         ],
-        max_tokens=5000,
+        max_completion_tokens=5000,
     )
 
     content = response.choices[0].message.content.strip()
@@ -956,6 +786,7 @@ Return ONLY valid JSON.
 # STAGE 4 — TRANSFERABLE SKILLS
 # ============================================================
 
+
 def generate_transferable_skills(
     direction: str,
     required_skills: list | None = None,
@@ -972,16 +803,12 @@ def generate_transferable_skills(
     interest_analysis = interest_analysis or {}
 
     required_skills_data = [
-        skill.model_dump()
-        if hasattr(skill, "model_dump")
-        else skill
+        skill.model_dump() if hasattr(skill, "model_dump") else skill
         for skill in required_skills
     ]
 
     skill_assessments_data = [
-        assessment.model_dump()
-        if hasattr(assessment, "model_dump")
-        else assessment
+        assessment.model_dump() if hasattr(assessment, "model_dump") else assessment
         for assessment in skill_assessments
     ]
 
@@ -1055,7 +882,7 @@ Return ONLY valid JSON.
                 "content": user_prompt,
             },
         ],
-        max_tokens=4000,
+        max_completion_tokens=4000,
         response_format={
             "type": "json_object",
         },
@@ -1088,6 +915,7 @@ Return ONLY valid JSON.
 # STAGE 5 — SKILL GAP ANALYSIS
 # ============================================================
 
+
 def generate_skill_gap_analysis(
     direction: str,
     required_skills: list,
@@ -1096,23 +924,17 @@ def generate_skill_gap_analysis(
 ) -> SkillGapResult:
 
     required_skills_data = [
-        skill.model_dump()
-        if hasattr(skill, "model_dump")
-        else skill
+        skill.model_dump() if hasattr(skill, "model_dump") else skill
         for skill in required_skills
     ]
 
     skill_assessments_data = [
-        assessment.model_dump()
-        if hasattr(assessment, "model_dump")
-        else assessment
+        assessment.model_dump() if hasattr(assessment, "model_dump") else assessment
         for assessment in skill_assessments
     ]
 
     transferable_skills_data = [
-        skill.model_dump()
-        if hasattr(skill, "model_dump")
-        else skill
+        skill.model_dump() if hasattr(skill, "model_dump") else skill
         for skill in transferable_skills
     ]
 
@@ -1165,7 +987,7 @@ Return ONLY valid JSON.
                 "content": user_prompt,
             },
         ],
-        max_tokens=4000,
+        max_completion_tokens=4000,
         response_format={
             "type": "json_object",
         },
@@ -1187,15 +1009,14 @@ Return ONLY valid JSON.
 
     except Exception as e:
         raise ValueError(
-            "LLM output does not match "
-            "SkillGapResult schema.\n\n"
-            f"Data:\n{data}"
+            "LLM output does not match " "SkillGapResult schema.\n\n" f"Data:\n{data}"
         ) from e
 
 
 # ============================================================
 # STAGE 6 — TRANSITION DIFFICULTY + ROADMAP
 # ============================================================
+
 
 def generate_transition_roadmap(
     direction: str,
@@ -1296,7 +1117,7 @@ Return ONLY valid JSON.
                 "content": user_prompt,
             },
         ],
-        max_tokens=5000,
+        max_completion_tokens=5000,
         response_format={
             "type": "json_object",
         },
