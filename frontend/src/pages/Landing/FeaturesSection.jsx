@@ -2,9 +2,11 @@ import {
   Radar,
   LineChart,
   MessagesSquare,
+  Sparkles,
   Compass,
   PuzzleIcon,
-  BellRing,
+  Repeat,
+  Map,
 } from "lucide-react";
 import FeatureCard from "../../components/FeatureCard/FeatureCard";
 
@@ -14,14 +16,15 @@ function FeaturesSection() {
       <div className="container">
         <div className="section-head">
           <span className="eyebrow">Platform capabilities</span>
-          <h2 className="section-title">Built to explain risk, not just report scores.</h2>
+          <h2 className="section-title">Two intelligence layers, one platform.</h2>
           <p className="section-sub">
-            Six capabilities, working together across teachers, students and parents.
+            Academic Risk Intelligence and Student Navigation Intelligence, working together
+            across teachers, students and parents.
           </p>
         </div>
 
         <div className="features__grid">
-          {/* Primary — Early Risk Detection */}
+          {/* Row 1: hero(4) + compact-2(2) = 6 */}
           <FeatureCard
             index="01"
             size="hero"
@@ -43,15 +46,22 @@ function FeaturesSection() {
               </div>
             }
           />
+          <FeatureCard
+            index="03"
+            size="compact-2"
+            icon={<MessagesSquare size={20} />}
+            title="AI risk explanation"
+            description="Explain why a student may be flagged, in plain, understandable language."
+          />
 
-          {/* Secondary — Performance Intelligence */}
+          {/* Row 2: wide(3) + wide(3) = 6 */}
           <FeatureCard
             index="02"
             size="wide"
             accent="secondary"
             icon={<LineChart size={22} />}
             title="Performance intelligence"
-            description="Go beyond the current mark and understand the student's academic trajectory across assessments."
+            description="Understand a student's academic trajectory rather than isolated marks."
             visual={
               <svg viewBox="0 0 220 46" className="trend-visual" role="presentation" aria-hidden="true">
                 <polyline
@@ -66,39 +76,49 @@ function FeaturesSection() {
               </svg>
             }
           />
-
-          <FeatureCard
-            index="03"
-            size="default"
-            icon={<MessagesSquare size={20} />}
-            title="AI-powered explanations"
-            description="Understand the major factors contributing to a student's risk, explained in plain language."
-          />
-
           <FeatureCard
             index="04"
-            size="default"
-            accent="secondary"
-            icon={<Compass size={20} />}
-            title="Career direction"
-            description="Connect a student's interests, academic evidence and existing skills to potential career pathways."
+            size="wide"
+            accent="nav"
+            icon={<Sparkles size={22} />}
+            title="Adaptive interest discovery"
+            description="Dynamically understand a student's interests through up to 5 adaptive questions — no fixed questionnaire."
           />
 
+          {/* Row 3: compact-3 + compact-3 = 6 */}
           <FeatureCard
             index="05"
-            size="default"
-            icon={<PuzzleIcon size={20} />}
-            title="Skill-gap analysis"
-            description="Identify relevant skill gaps against a chosen direction and suggest areas for development."
+            size="compact-3"
+            accent="nav"
+            icon={<Compass size={20} />}
+            title="Career direction"
+            description="Identify potential directions based on interest, evidence and existing skills."
           />
-
           <FeatureCard
             index="06"
-            size="default"
-            accent="secondary"
-            icon={<BellRing size={20} />}
-            title="Parent intervention"
-            description="Notify parents when sustained academic risk requires attention at home."
+            size="compact-3"
+            accent="nav"
+            icon={<PuzzleIcon size={20} />}
+            title="Skill-gap intelligence"
+            description="Compare current capabilities with what a selected direction actually requires."
+          />
+
+          {/* Row 4: compact-3 + compact-3 = 6 */}
+          <FeatureCard
+            index="07"
+            size="compact-3"
+            accent="nav"
+            icon={<Repeat size={20} />}
+            title="Transferable skill discovery"
+            description="Identify existing skills that can support a transition into a new direction."
+          />
+          <FeatureCard
+            index="08"
+            size="compact-3"
+            accent="nav"
+            icon={<Map size={20} />}
+            title="Personalized roadmap"
+            description="Turn insights into a practical, step-by-step plan of what to do next."
           />
         </div>
       </div>

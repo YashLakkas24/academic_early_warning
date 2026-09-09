@@ -28,14 +28,18 @@
   margin-bottom: 34px;
 }
 
-.login-page__mark {
+.navbar__mark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 32px;
   height: 32px;
   border-radius: var(--radius-small);
-  background: linear-gradient(155deg, var(--color-primary), var(--color-secondary));
+  background: linear-gradient(
+    155deg,
+    var(--color-primary),
+    var(--color-secondary)
+  );
   color: #071021;
 }
 
@@ -231,6 +235,7 @@
 /* ---------- Footnote ---------- */
 .login-card__footnote {
   margin-top: 20px;
+  margin-bottom: 18px;
   font-size: 12.5px;
   color: var(--color-text-muted);
   text-align: center;

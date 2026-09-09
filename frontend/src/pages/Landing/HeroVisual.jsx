@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, ArrowDownRight, TrendingDown, Users } from "lucide-react";
+import { academicRisk } from "../../data/academicRisk";
 import "./HeroVisual.css";
 
 /**
@@ -47,19 +48,19 @@ function HeroVisual() {
         <div className="hero-visual__stats">
           <div className="hv-stat">
             <Users size={14} className="hv-stat__icon" />
-            <span className="hv-stat__value">62</span>
+            <span className="hv-stat__value">{academicRisk.totalStudents}</span>
             <span className="hv-stat__label">Students</span>
           </div>
           <div className="hv-stat hv-stat--danger">
-            <span className="hv-stat__value">07</span>
+            <span className="hv-stat__value">{String(academicRisk.highRisk).padStart(2, "0")}</span>
             <span className="hv-stat__label">High Risk</span>
           </div>
           <div className="hv-stat hv-stat--warning">
-            <span className="hv-stat__value">13</span>
+            <span className="hv-stat__value">{String(academicRisk.mediumRisk).padStart(2, "0")}</span>
             <span className="hv-stat__label">Medium Risk</span>
           </div>
           <div className="hv-stat hv-stat--success">
-            <span className="hv-stat__value">42</span>
+            <span className="hv-stat__value">{academicRisk.stable}</span>
             <span className="hv-stat__label">Stable</span>
           </div>
         </div>
@@ -67,7 +68,7 @@ function HeroVisual() {
         <div className="hero-visual__chart">
           <div className="hero-visual__chart-label">
             <TrendingDown size={13} />
-            <span>Performance Trajectory — Div. B, Sem IV</span>
+            <span>Performance Trajectory — {academicRisk.classLabel}</span>
           </div>
           <svg
             viewBox="0 0 180 60"
@@ -113,26 +114,22 @@ function HeroVisual() {
             </span>
             <span className="hero-visual__signal-title">EARLY SIGNAL DETECTED</span>
           </div>
-          <p className="hero-visual__signal-text">7 students may require attention</p>
+          <p className="hero-visual__signal-text">{academicRisk.signalSummary}</p>
 
           <div className="hero-visual__why">
             <span className="hero-visual__why-label">Why?</span>
             <ul className="hero-visual__factors">
-              <li>
-                <ArrowDownRight size={12} /> Attendance trend
-              </li>
-              <li>
-                <ArrowDownRight size={12} /> Assessment trend
-              </li>
-              <li>
-                <ArrowDownRight size={12} /> Assignment completion
-              </li>
+              {academicRisk.riskFactors.map((factor) => (
+                <li key={factor.label}>
+                  <ArrowDownRight size={12} /> {factor.label}
+                </li>
+              ))}
             </ul>
           </div>
 
           <div className="hero-visual__action">
             <span className="hero-visual__action-label">Recommended action</span>
-            <span className="hero-visual__action-text">Schedule targeted academic support</span>
+            <span className="hero-visual__action-text">{academicRisk.recommendedAction}</span>
           </div>
         </div>
 

@@ -1,3 +1,4 @@
+import { Activity } from 'lucide-react';
 function initialsOf(name = '') {
   return name
     .split(' ')
@@ -17,8 +18,10 @@ export default function TeacherHeader({ profile, onBack, backLabel }) {
     <div className="teacher-topbar">
       <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
         <div className="teacher-brand">
-          <span className="teacher-brand-mark">AE</span>
-          Academic Early Warning
+          <span className="navbar__mark" aria-hidden="true">
+            <Activity size={18} strokeWidth={2.4} />
+          </span>
+          E.A.R.N
         </div>
         {onBack && (
           <button type="button" className="teacher-back-link" onClick={onBack}>

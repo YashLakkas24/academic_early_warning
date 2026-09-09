@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Activity, Eye, EyeOff, ArrowRight, AlertCircle } from "lucide-react";
+import {
+  Activity,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  ArrowLeft,
+  AlertCircle,
+} from "lucide-react";
 import Button from "../../components/Button/Button";
 import { submitLogin } from "../../services/authService";
 import "./Login.css";
@@ -26,12 +33,14 @@ function Login() {
 
   const isStudent = role === "student";
   const idLabel = isStudent ? "Student ID" : "Teacher ID";
-  const idPlaceholder = isStudent ? "Enter your student ID" : "Enter your teacher ID";
+  const idPlaceholder = isStudent
+    ? "Enter your student ID"
+    : "Enter your teacher ID";
 
   const handleRoleChange = (nextRole) => {
     if (nextRole === role) return;
     setRole(nextRole);
-    setError(""); // switching roles clears a stale error, avoids confusing the user
+    setError("");
   };
 
   const handleSubmit = async (e) => {
@@ -46,9 +55,9 @@ function Login() {
     }
 
     setLoading(true);
+
     try {
       const result = await submitLogin(role, id, password);
-      // Backend does not exist yet, so this route is a placeholder for now.
       navigate(result.redirectTo);
     } catch (err) {
       setError(err.message || "Something went wrong. Please try again.");
@@ -61,42 +70,64 @@ function Login() {
     <div className="login-page">
       <div className="login-page__glow" aria-hidden="true" />
 
-      <a href="/" className="login-page__brand" onClick={(e) => { e.preventDefault(); navigate("/"); }}>
-        <span className="login-page__mark" aria-hidden="true">
+      <a
+        href="/"
+        className="login-page__brand"
+        onClick={(e) => {
+          e.preventDefault();
+          navigate("/");
+        }}
+      >
+        <span className="navbar__mark" aria-hidden="true">
           <Activity size={18} strokeWidth={2.4} />
         </span>
-        <span>Academic Early Warning</span>
+        <span>E.A.R.N</span>
       </a>
 
       <div className="login-card">
         <h1 className="login-card__title">Welcome back</h1>
+
         <p className="login-card__subtitle">
           Sign in to continue to your Academic Early Warning workspace.
         </p>
 
         {/* ---------- Role toggle ---------- */}
-        <div className="role-toggle" role="tablist" aria-label="Select account type">
+        <div
+          className="role-toggle"
+          role="tablist"
+          aria-label="Select account type"
+        >
           <button
             type="button"
             role="tab"
             aria-selected={isStudent}
-            className={`role-toggle__option ${isStudent ? "role-toggle__option--active" : ""}`}
+            className={`role-toggle__option ${
+              isStudent ? "role-toggle__option--active" : ""
+            }`}
             onClick={() => handleRoleChange("student")}
           >
             Student
           </button>
+
           <button
             type="button"
             role="tab"
             aria-selected={!isStudent}
-            className={`role-toggle__option ${!isStudent ? "role-toggle__option--active" : ""}`}
+            className={`role-toggle__option ${
+              !isStudent ? "role-toggle__option--active" : ""
+            }`}
             onClick={() => handleRoleChange("teacher")}
           >
             Teacher
           </button>
+
           <span
             className="role-toggle__thumb"
-            style={{ transform: isStudent ? "translateX(0%)" : "translateX(100%)" }}
+            style={{
+              transform: isStudent
+                ? "translateX(0%)"
+                : "translateX(100%)",
+            }}
             aria-hidden="true"
           />
         </div>
@@ -108,6 +139,7 @@ function Login() {
         <form className="login-form" onSubmit={handleSubmit} noValidate>
           <div className="form-field">
             <label htmlFor="login-id">{idLabel}</label>
+
             <input
               id="login-id"
               name="id"
@@ -122,6 +154,7 @@ function Login() {
 
           <div className="form-field">
             <label htmlFor="login-password">Password</label>
+
             <div className="password-input">
               <input
                 id="login-password"
@@ -133,20 +166,31 @@ function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
               />
+
               <button
                 type="button"
                 className="password-input__toggle"
                 onClick={() => setShowPassword((v) => !v)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-label={
+                  showPassword ? "Hide password" : "Show password"
+                }
                 aria-pressed={showPassword}
                 disabled={loading}
               >
-                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                {showPassword ? (
+                  <EyeOff size={17} />
+                ) : (
+                  <Eye size={17} />
+                )}
               </button>
             </div>
           </div>
 
-          <div className="login-form__error" role="alert" aria-live="polite">
+          <div
+            className="login-form__error"
+            role="alert"
+            aria-live="polite"
+          >
             {error && (
               <span className="login-form__error-text">
                 <AlertCircle size={14} />
@@ -162,14 +206,27 @@ function Login() {
             loading={loading}
             icon={!loading ? <ArrowRight size={17} /> : null}
           >
-            {loading ? "Signing in…" : `Sign In as ${isStudent ? "Student" : "Teacher"}`}
+            {loading
+              ? "Signing in…"
+              : `Sign In as ${isStudent ? "Student" : "Teacher"}`}
           </Button>
         </form>
 
         <p className="login-card__footnote">
-          Credentials are issued by your institution. Contact your department if you don&apos;t
-          have one yet.
+          Credentials are issued by your institution. Contact your department
+          if you don&apos;t have one yet.
         </p>
+
+        {/* ---------- Back to Home ---------- */}
+        <Button
+          variant="ghost"
+          size="medium"
+          fullWidth
+          icon={<ArrowLeft size={16} />}
+          onClick={() => navigate("/")}
+        >
+          Back to Home
+        </Button>
       </div>
     </div>
   );

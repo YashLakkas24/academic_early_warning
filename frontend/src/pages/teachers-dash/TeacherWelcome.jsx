@@ -76,7 +76,7 @@ export default function TeacherWelcome() {
         <div className="welcome-hero view-transition">
 
           <span className="welcome-eyebrow">
-            Academic Early Warning
+            E.A.R.N
           </span>
 
           <h1 className="welcome-heading">

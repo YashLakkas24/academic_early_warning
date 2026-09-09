@@ -1,32 +1,30 @@
 import SignalThread from "./SignalThread";
 
-const STEPS = [
-  {
-    n: "01",
-    title: "Collect academic indicators",
-    desc: "Attendance, internal assessments and assignment completion, brought into one place.",
-  },
-  {
-    n: "02",
-    title: "Analyze performance patterns",
-    desc: "Track how each student is trending over time, not just their latest score.",
-  },
-  {
-    n: "03",
-    title: "Detect emerging risk",
-    desc: "Surface students whose trajectory is changing early — before results make it obvious.",
-  },
-  {
-    n: "04",
-    title: "Explain contributing factors",
-    desc: "Show faculty why a student is flagged, in plain, understandable language.",
-  },
-  {
-    n: "05",
-    title: "Support intervention",
-    desc: "Turn a detected signal into a concrete, timely next step.",
-  },
+const FACULTY_FLOW = ["Academic Data", "Risk Detection", "Explanation", "Intervention"];
+const STUDENT_FLOW = [
+  "Interest",
+  "Adaptive Discovery",
+  "Analysis",
+  "Direction",
+  "Skills",
+  "Transferable Skills",
+  "Skill Gap",
+  "Roadmap",
 ];
+
+function MiniFlow({ items, accent }) {
+  return (
+    <ol className={`mini-flow mini-flow--${accent}`}>
+      {items.map((item, i) => (
+        <li key={item}>
+          <span className="mini-flow__dot" aria-hidden="true" />
+          {item}
+          {i < items.length - 1 && <span className="mini-flow__sep" aria-hidden="true" />}
+        </li>
+      ))}
+    </ol>
+  );
+}
 
 function SolutionSection() {
   return (
@@ -34,10 +32,11 @@ function SolutionSection() {
       <div className="container">
         <div className="section-head">
           <span className="eyebrow">The solution</span>
-          <h2 className="section-title">From early signal to timely action.</h2>
+          <h2 className="section-title">From early signal to clearer direction.</h2>
           <p className="section-sub">
-            Academic Early Warning turns the same scattered signals into a single, connected
-            trajectory — so risk becomes visible while there is still time to act on it.
+            E.A.R.N. connects academic monitoring, student intelligence, career direction,
+            skill-gap analysis and transferable skills into one personalized navigation
+            experience.
           </p>
         </div>
 
@@ -45,14 +44,19 @@ function SolutionSection() {
           <SignalThread stage="connecting" />
         </div>
 
-        <div className="solution__steps">
-          {STEPS.map((step) => (
-            <div className="solution__step" key={step.n}>
-              <span className="solution__step-n">{step.n}</span>
-              <h3 className="solution__step-title">{step.title}</h3>
-              <p className="solution__step-desc">{step.desc}</p>
-            </div>
-          ))}
+        <div className="solution__flows">
+          <div className="solution__flow-col">
+            <span className="solution__flow-label solution__flow-label--risk">Faculty</span>
+            <MiniFlow items={FACULTY_FLOW} accent="risk" />
+          </div>
+          <div className="solution__flow-col">
+            <span className="solution__flow-label solution__flow-label--nav">Student</span>
+            <MiniFlow items={STUDENT_FLOW} accent="nav" />
+          </div>
+        </div>
+
+        <div className="solution__outcome">
+          <span>Better outcome</span>
         </div>
       </div>
     </section>

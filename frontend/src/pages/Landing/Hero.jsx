@@ -16,7 +16,7 @@ function Hero() {
         <div className="hero__copy">
           <span className="eyebrow">
             <span className="eyebrow-dot" aria-hidden="true" />
-            AI-powered academic early warning
+            E.A.R.N. · Early Academic Risk and Navigation
           </span>
 
           <h1 className="hero__headline">
@@ -24,8 +24,9 @@ function Hero() {
           </h1>
 
           <p className="hero__subtext">
-            An intelligent academic early-warning platform that helps educators identify emerging
-            academic risk, understand the factors behind it, and take action at the right time.
+            E.A.R.N. combines academic risk intelligence — identifying emerging risk and explaining
+            what's behind it — with student navigation intelligence, helping students understand
+            their interests, discover a direction, and build a personalized path toward it.
           </p>
 
           <div className="hero__actions">
