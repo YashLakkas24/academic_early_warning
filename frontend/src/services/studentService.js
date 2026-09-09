@@ -48,7 +48,7 @@ export async function getStudentProfile(studentId) {
 
   try {
     const response = await fetch(
-      `${API_BASE_URL}/students/${encodeURIComponent(cleanId)}`,
+      `${API_BASE_URL}/api/students/${encodeURIComponent(cleanId)}`,
       {
         method: "GET",
         headers: await getAuthHeaders(),
@@ -98,7 +98,7 @@ export async function getStudentInterestStatus(studentId) {
   if (!cleanId) return { completed: false, interests: [] };
 
   try {
-    const response = await fetch(`${API_BASE_URL}/students/${encodeURIComponent(cleanId)}/interests/status`, {
+    const response = await fetch(`${API_BASE_URL}/api/students/${encodeURIComponent(cleanId)}/interests/status`, {
       method: "GET",
       headers: await getAuthHeaders(),
     });
@@ -117,7 +117,7 @@ export async function getStudentInterestStatus(studentId) {
  */
 export async function getInterestOptions() {
   try {
-    const response = await fetch(`${API_BASE_URL}/interests/options`, {
+    const response = await fetch(`${API_BASE_URL}/api/interests/options`, {
       method: "GET",
       headers: {
         Accept: "application/json",
@@ -153,7 +153,7 @@ export async function saveStudentInterest(studentId, interest) {
   const cleanId = (studentId || "").trim().toUpperCase();
   if (!cleanId) throw new Error("Student ID is required.");
 
-  const response = await fetch(`${API_BASE_URL}/students/${encodeURIComponent(cleanId)}/interests`, {
+  const response = await fetch(`${API_BASE_URL}/api/students/${encodeURIComponent(cleanId)}/interests`, {
     method: "POST",
     headers: await getAuthHeaders(true),
     body: JSON.stringify({ interest }),
@@ -175,7 +175,7 @@ export async function startInterestSession(studentId, interest, reset = false) {
   if (!cleanId) throw new Error("Student ID is required.");
 
   const response = await fetch(
-    `${API_BASE_URL}/students/${encodeURIComponent(cleanId)}/interest-session/start?reset=${reset}`,
+    `${API_BASE_URL}/api/students/${encodeURIComponent(cleanId)}/interest-session/start?reset=${reset}`,
     {
       method: "POST",
       headers: await getAuthHeaders(true),
@@ -200,7 +200,7 @@ export async function submitInterestAnswer(studentId, { interest, question_id, q
   if (!cleanId) throw new Error("Student ID is required.");
 
   const response = await fetch(
-    `${API_BASE_URL}/students/${encodeURIComponent(cleanId)}/interest-session/answer`,
+    `${API_BASE_URL}/api/students/${encodeURIComponent(cleanId)}/interest-session/answer`,
     {
       method: "POST",
       headers: await getAuthHeaders(true),
@@ -234,7 +234,7 @@ export async function getStudentInterestAnalysis(studentId) {
   }
 
   const response = await fetch(
-    `${API_BASE_URL}/students/${encodeURIComponent(cleanId)}/interest-analysis`,
+    `${API_BASE_URL}/api/students/${encodeURIComponent(cleanId)}/interest-analysis`,
     {
       method: "GET",
       headers: await getAuthHeaders(),
@@ -261,7 +261,7 @@ export async function getStudentCareerDirections(studentId) {
   if (!cleanId) throw new Error("Student ID is required.");
 
   const response = await fetch(
-    `${API_BASE_URL}/students/${encodeURIComponent(cleanId)}/career-directions`,
+    `${API_BASE_URL}/api/students/${encodeURIComponent(cleanId)}/career-directions`,
     {
       method: "GET",
       headers: await getAuthHeaders(),
@@ -288,7 +288,7 @@ export async function getStudentSkillGap(studentId, direction = null, forceRefre
   if (direction) queryParams.append("direction", direction);
   if (forceRefresh) queryParams.append("force_refresh", "true");
 
-  const url = `${API_BASE_URL}/students/${encodeURIComponent(cleanId)}/skill-gap${queryParams.toString() ? `?${queryParams.toString()}` : ""
+  const url = `${API_BASE_URL}/api/students/${encodeURIComponent(cleanId)}/skill-gap${queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`;
 
   const response = await fetch(url, {
@@ -316,7 +316,7 @@ export async function getStudentRoadmap(studentId, direction = null, forceRefres
   if (direction) queryParams.append("direction", direction);
   if (forceRefresh) queryParams.append("force_refresh", "true");
 
-  const url = `${API_BASE_URL}/students/${encodeURIComponent(cleanId)}/roadmap${queryParams.toString() ? `?${queryParams.toString()}` : ""
+  const url = `${API_BASE_URL}/api/students/${encodeURIComponent(cleanId)}/roadmap${queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`;
 
   const response = await fetch(url, {
@@ -341,7 +341,7 @@ export async function analyzeCareerDirection(studentId, direction, forceRefresh 
   if (!cleanId) throw new Error("Student ID is required.");
 
   const response = await fetch(
-    `${API_BASE_URL}/students/${encodeURIComponent(cleanId)}/career-pivot/analyze`,
+    `${API_BASE_URL}/api/students/${encodeURIComponent(cleanId)}/career-pivot/analyze`,
     {
       method: "POST",
       headers: await getAuthHeaders(true),
