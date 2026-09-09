@@ -30,7 +30,6 @@ from routes.student import router as student_router
 from routes.interest import router as interest_router
 from routes.interest_options import router as interest_options_router
 
-
 app = FastAPI()
 
 
@@ -52,6 +51,7 @@ app.add_middleware(
         "http://127.0.0.1:5173",
         "http://localhost:5174",
         "http://127.0.0.1:5174",
+        "https://academic-early-warning-cx76zq4vm-yashlakkas24-projects.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -74,29 +74,30 @@ app.include_router(student_router)
 # HOME
 # ============================================================
 
+
 @app.get("/")
 def home():
-    return {
-        "message": "Academic Early Warning Backend is running!"
-    }
+    return {"message": "Academic Early Warning Backend is running!"}
 
 
 # ============================================================
 # API TEST
 # ============================================================
 
+
 @app.get("/api/test")
 def api_test():
     return {
         "project": "Academic Early Warning",
         "status": "Backend working",
-        "member": "Member 1"
+        "member": "Member 1",
     }
 
 
 # ============================================================
 # DATABASE TEST
 # ============================================================
+
 
 @app.get("/api/test-db")
 def test_database():
@@ -106,14 +107,8 @@ def test_database():
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
 
-        return {
-            "status": "success",
-            "message": "FastAPI is connected to PostgreSQL!"
-        }
+        return {"status": "success", "message": "FastAPI is connected to PostgreSQL!"}
 
     except Exception as e:
 
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+        return {"status": "error", "message": str(e)}
