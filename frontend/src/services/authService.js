@@ -2,6 +2,7 @@ import { getAuth, signInWithCustomToken } from "firebase/auth";
 import app from "../firebase";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
+console.log("API_BASE_URL:", API_BASE_URL);
 const auth = getAuth(app);
 
 function withTimeout(promise, milliseconds, message) {
@@ -50,8 +51,8 @@ export async function submitLogin(role, id, password) {
           role,
         }),
       }),
-      15000,
-      "Backend login timed out. Please make sure FastAPI is running.",
+      60000,
+      "Backend login timed out. Please try again.",
     );
   } catch (error) {
     if (error.message.includes("timed out")) {
@@ -59,7 +60,7 @@ export async function submitLogin(role, id, password) {
     }
 
     throw new Error(
-      "Cannot connect to the backend server. Please ensure FastAPI is running on http://127.0.0.1:8000.",
+      `Cannot connect to backend at ${API_BASE_URL}. Please try again.`,
     );
   }
 
