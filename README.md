@@ -78,6 +78,62 @@ E.A.R.N. connects deterministic academic early-warning with adaptive interest di
 5. Generative AI produces qualitative analysis, strengths, skill gaps, and personalized next steps
 
 ---
+## 📸 Screenshots / Demo
+
+A quick visual walkthrough of both the teacher and student sides of E.A.R.N — from login, to risk analytics, to the AI-driven Interest+ journey.
+
+### 🔐 Login
+
+<p align="center">
+  <img src="docs/images/login.png" width="380" alt="Login Screen"/>
+</p>
+
+<p align="center"><i>Role-aware login — students and teachers sign into the same platform through separate, secure flows.</i></p>
+
+<br/>
+
+### 👨‍🏫 Teacher Side — Risk Detection & Analytics
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="docs/images/teacher-dashboard.jpeg" alt="Teacher Home"/><br/>
+      <sub><b>Teacher Home</b> — "Turn Academic Signals Into Action"</sub>
+    </td>
+    <td width="50%" align="center">
+      <img src="docs/images/risk-analysis.jpeg" alt="Academic Risk Analytics"/><br/>
+      <sub><b>Academic Risk Analytics</b> — risk distribution & drill-down by High / Medium / Low</sub>
+    </td>
+  </tr>
+</table>
+
+<br/>
+
+### 🎓 Student Side — Dashboard & Interest+ Discovery
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="docs/images/student-dashboard.jpeg" alt="Student Dashboard"/><br/>
+      <sub><b>Student Workspace</b> — academic snapshot + AI-generated interest profile</sub>
+    </td>
+    <td width="50%" align="center">
+      <img src="docs/images/interest-plus.png" alt="Interest+ Adaptive Questioning"/><br/>
+      <sub><b>Interest+ Discovery</b> — adaptive interest selection that drives follow-up questions</sub>
+    </td>
+  </tr>
+</table>
+
+<br/>
+
+### 🗺️ End-to-End Student Journey
+
+<p align="center">
+  <img src="docs/images/Student-journey.png" width="420" alt="Student Journey Flow"/>
+</p>
+
+<p align="center"><i>Login → Dashboard → Select Interest → Interest+ AI Assessment → Adaptive Questions → AI Analysis (interest, confidence, experience, capability, strengths, skill gaps) → Skill Gap Analysis → Personalized Roadmap.</i></p>
+
 
 ## AI & system architecture
 
