@@ -490,14 +490,21 @@ Academic early-warning tools exist. Career-interest quizzes exist. What's uncomm
 
 ## 🔮 Future Scope
 
-**01 · Predictive Academic Intelligence**
-Move from detecting *current* risk to predicting emerging risk patterns early enough to intervene before performance meaningfully declines.
+### 01 · Continuous Predictive Academic Intelligence
 
-**02 · Adaptive AI & Personalized Learning**
-Dynamically adapt assessments, learning recommendations, and development plans as a student's responses, interests, skills, and progress change over time.
+Continuously update student data such as attendance, marks, assessments, and engagement to detect emerging risk patterns in near real time and enable early intervention before academic performance declines significantly.
 
-**03 · Scalable Opportunity & Student Intelligence**
-Expand from individual guidance to an institution-wide intelligence layer connecting students with personalized internships, scholarships, hackathons, competitions, and research opportunities as the platform scales across institutions.
+### 02 · Adaptive AI & Personalized Development
+
+Continuously adapt assessments, skill-gap analysis, learning recommendations, and career roadmaps as a student's interests, skills, responses, and academic progress evolve over time.
+
+### 03 · Parent–Teacher Early Intervention
+
+Enable secure communication between teachers and parents when a student's academic performance shows significant or persistent risk, allowing timely alerts, discussions, and coordinated support for the student.
+
+### 04 · Scalable Student Intelligence
+
+As the platform expands across institutions, integrate personalized opportunities such as internships, scholarships, hackathons, competitions, and research programs based on each student's interests, skills, and career goals.
 
 
 
