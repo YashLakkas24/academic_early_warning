@@ -1,7 +1,7 @@
 import { getAuth } from "firebase/auth";
 import app from "../firebase";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL = `${import.meta.env.VITE_API_URL}/api`;
 const auth = getAuth(app);
 
 async function getAuthHeaders() {
@@ -201,7 +201,6 @@ export async function getStudentsByRisk(riskLevel) {
   }));
 }
 
-
 // =========================================================
 // GET ONE STUDENT DETAILS
 // =========================================================
@@ -217,7 +216,6 @@ export async function getStudentsByRisk(riskLevel) {
 // Risk list       -> NO AI
 // Click Arjun     -> AI runs for Arjun only
 // Click Sneha     -> AI runs for Sneha only
-
 
 export async function getStudentDetails(studentId) {
   if (!studentId) {
@@ -238,9 +236,9 @@ export async function getStudentDetails(studentId) {
     ? rawIntervention.reasons
     : typeof rawIntervention === "string"
       ? rawIntervention.reasons
-        .split("\n")
-        .map((reason) => reason.trim())
-        .filter(Boolean)
+          .split("\n")
+          .map((reason) => reason.trim())
+          .filter(Boolean)
       : [];
 
   const interventionRecommendation =
@@ -257,7 +255,6 @@ export async function getStudentDetails(studentId) {
   // =======================================================
   // NORMALIZE AI SUGGESTION
   // =======================================================
-
 
   let aiSuggestion = "";
 
