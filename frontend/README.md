@@ -5,24 +5,6 @@
 **An AI-powered student intelligence platform that doesn't just flag who's falling behind — it explains why, and shows every student where to go next.**
 
 
-
----
-
-## 🚀 What is Academic Early Warning?
-
-Most academic dashboards can answer one question: **"What are this student's marks?"**
-
-They can't answer the three that actually matter:
-- *Why* is this student struggling?
-- *What* should be done about it — right now?
-- *What* does this student actually want to become?
-
-**Academic Early Warning** is a unified platform that closes that gap. For **teachers**, it turns raw attendance, marks, and assignment data into an explained, prioritized risk list with recommended interventions. For **students**, it runs an adaptive, AI-driven **Interest+** conversation that maps their interests, confidence, and capability against real skill gaps — and turns that into a personalized roadmap of next steps.
-
-It's not a reporting tool. It's an early-warning system paired with a direction-finding system, built on the same data.
-
----
-
 ## 🎯 Problem We Solve
 
 > Education systems track student **performance** — but rarely understand student **growth**.
