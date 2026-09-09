@@ -124,9 +124,7 @@ function Login() {
           <span
             className="role-toggle__thumb"
             style={{
-              transform: isStudent
-                ? "translateX(0%)"
-                : "translateX(100%)",
+              transform: isStudent ? "translateX(0%)" : "translateX(100%)",
             }}
             aria-hidden="true"
           />
@@ -138,7 +136,13 @@ function Login() {
 
         <form className="login-form" onSubmit={handleSubmit} noValidate>
           <div className="form-field">
-            <label htmlFor="login-id">{idLabel}</label>
+            <div className="field-label-row">
+              <label htmlFor="login-id">{idLabel}</label>
+
+              <span className="demo-credential">
+                Demo: {isStudent ? "STU001" : "TCH001"}
+              </span>
+            </div>
 
             <input
               id="login-id"
@@ -153,7 +157,13 @@ function Login() {
           </div>
 
           <div className="form-field">
-            <label htmlFor="login-password">Password</label>
+            <div className="field-label-row">
+              <label htmlFor="login-password">Password</label>
+
+              <span className="demo-credential">
+                Demo: {isStudent ? "student001" : "teacher001"}
+              </span>
+            </div>
 
             <div className="password-input">
               <input
@@ -171,26 +181,16 @@ function Login() {
                 type="button"
                 className="password-input__toggle"
                 onClick={() => setShowPassword((v) => !v)}
-                aria-label={
-                  showPassword ? "Hide password" : "Show password"
-                }
+                aria-label={showPassword ? "Hide password" : "Show password"}
                 aria-pressed={showPassword}
                 disabled={loading}
               >
-                {showPassword ? (
-                  <EyeOff size={17} />
-                ) : (
-                  <Eye size={17} />
-                )}
+                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
               </button>
             </div>
           </div>
 
-          <div
-            className="login-form__error"
-            role="alert"
-            aria-live="polite"
-          >
+          <div className="login-form__error" role="alert" aria-live="polite">
             {error && (
               <span className="login-form__error-text">
                 <AlertCircle size={14} />
@@ -213,8 +213,8 @@ function Login() {
         </form>
 
         <p className="login-card__footnote">
-          Credentials are issued by your institution. Contact your department
-          if you don&apos;t have one yet.
+          Credentials are issued by your institution. Contact your department if
+          you don&apos;t have one yet.
         </p>
 
         {/* ---------- Back to Home ---------- */}
