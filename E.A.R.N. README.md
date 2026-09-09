@@ -768,11 +768,11 @@ Support larger student populations and integrate E.A.R.N. with institutional aca
 
 ## 👨‍💻 Team — Teen Titans
 
-| Name |
-|---|
-| Vaibhav Kulkarni |
-| Yash Lakkas |
-| Isha Samant |
+| Name | Role | Profile / Portfolio |
+| :--- | :--- | :--- |
+| Vaibhav Kulkarni | Member | [GitHub / Portfolio](https://github.com/VaibhavCodes26) |
+| Yash Lakkas | Lead | [GitHub / Portfolio](https://github.com/YashLakkas24) |
+| Isha Samant | Member | [GitHub / Portfolio](https://github.com/IshaSamant04) |
 
 ---
 
