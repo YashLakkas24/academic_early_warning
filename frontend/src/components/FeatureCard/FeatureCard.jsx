@@ -3,15 +3,18 @@ import "./FeatureCard.css";
 /**
  * Shared FeatureCard.
  * `size` controls how much visual weight the card gets in the bento-style
- * features grid: "hero" (primary feature), "wide" (secondary feature), or
- * "default" (supporting features).
+ * features grid: "hero" (primary feature), "wide" (secondary feature),
+ * "compact-2" or "compact-3" (supporting features, sized to keep every
+ * row summing to 6 columns with no gaps).
+ * `accent` controls the icon color: "primary" (blue, default), "secondary"
+ * (violet), or "nav" (teal, used for Student Navigation capabilities).
  */
 function FeatureCard({
   index,
   icon,
   title,
   description,
-  size = "default",
+  size = "compact-2",
   accent = "primary",
   visual,
   children,

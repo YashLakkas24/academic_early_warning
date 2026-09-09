@@ -46,11 +46,29 @@
 }
 
 .navbar__brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 15.5px;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.01em;
   color: var(--color-text-primary);
+}
+
+.navbar__brand-sub {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 10.5px;
+  letter-spacing: 0.01em;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .navbar__brand-sub {
+    display: none;
+  }
 }
 
 /* ---------- Center links ---------- */

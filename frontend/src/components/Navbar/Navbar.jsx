@@ -28,6 +28,7 @@ function Navbar() {
   };
 
   const links = [
+    { label: "Student Navigation", id: "student-navigation" },
     { label: "How It Works", id: "how-it-works" },
     { label: "Features", id: "features" },
     { label: "About", id: "differentiator" },
@@ -47,7 +48,10 @@ function Navbar() {
           <span className="navbar__mark" aria-hidden="true">
             <Activity size={18} strokeWidth={2.4} />
           </span>
-          <span className="navbar__brand-text">Academic Early Warning</span>
+          <span className="navbar__brand-text">
+            E.A.R.N.
+            <span className="navbar__brand-sub">Early Academic Risk and Navigation</span>
+          </span>
         </a>
 
         <nav className="navbar__links" aria-label="Primary">

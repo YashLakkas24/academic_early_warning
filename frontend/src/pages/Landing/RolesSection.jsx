@@ -5,19 +5,19 @@ const ROLES = [
     icon: <GraduationCap size={22} />,
     role: "Teacher",
     line: "See who needs attention.",
-    desc: "Risk detection, performance trends and guided intervention across every batch you teach.",
+    desc: "See who needs attention and understand the context behind the signal — risk detection, performance trends and guided intervention across every batch you teach.",
   },
   {
     icon: <UserRound size={22} />,
     role: "Student",
-    line: "Understand where you're heading.",
-    desc: "See your own trajectory, explore career direction, and understand skill gaps early.",
+    line: "Understand where your interests can take you.",
+    desc: "Understand where your interests can take you, what skills you already have, and what to build next — from direction to a personalized roadmap.",
   },
   {
     icon: <Users2 size={22} />,
     role: "Parent",
     line: "Know when support is needed.",
-    desc: "Stay aware of sustained academic risk with timely, meaningful alerts — not noise.",
+    desc: "Know when sustained academic risk requires support, with timely, meaningful alerts — not noise.",
   },
 ];
 

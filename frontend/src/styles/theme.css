@@ -31,6 +31,10 @@
   --color-secondary: #8a7cf2;
   --color-secondary-dim: rgba(138, 124, 242, 0.14);
 
+  /* ---------- Student Navigation accent ---------- */
+  --color-nav-teal: #3fc7bd;
+  --color-nav-teal-dim: rgba(63, 199, 189, 0.14);
+  
   /* ---------- Status ---------- */
   --color-success: #34c77b;
   --color-success-dim: rgba(52, 199, 123, 0.14);
