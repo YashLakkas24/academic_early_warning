@@ -1,15 +1,14 @@
-
 import { getAuth, signInWithCustomToken } from "firebase/auth";
 import app from "../firebase";
 
-const API_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 const auth = getAuth(app);
 
 function withTimeout(promise, milliseconds, message) {
   return Promise.race([
     promise,
     new Promise((_, reject) =>
-      setTimeout(() => reject(new Error(message)), milliseconds)
+      setTimeout(() => reject(new Error(message)), milliseconds),
     ),
   ]);
 }
@@ -39,7 +38,7 @@ export async function submitLogin(role, id, password) {
 
   try {
     response = await withTimeout(
-      fetch(`${API_URL}/api/auth/login`, {
+      fetch(`${API_BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -52,7 +51,7 @@ export async function submitLogin(role, id, password) {
         }),
       }),
       15000,
-      "Backend login timed out. Please make sure FastAPI is running."
+      "Backend login timed out. Please make sure FastAPI is running.",
     );
   } catch (error) {
     if (error.message.includes("timed out")) {
@@ -60,7 +59,7 @@ export async function submitLogin(role, id, password) {
     }
 
     throw new Error(
-      "Cannot connect to the backend server. Please ensure FastAPI is running on http://127.0.0.1:8000."
+      "Cannot connect to the backend server. Please ensure FastAPI is running on http://127.0.0.1:8000.",
     );
   }
 
@@ -84,7 +83,7 @@ export async function submitLogin(role, id, password) {
   // --------------------------------------------------
   if (!data?.firebase_token) {
     throw new Error(
-      "Login successful, but Firebase authentication token was not received."
+      "Login successful, but Firebase authentication token was not received.",
     );
   }
 
@@ -106,7 +105,7 @@ export async function submitLogin(role, id, password) {
     const userCredential = await withTimeout(
       signInWithCustomToken(auth, data.firebase_token),
       15000,
-      "Firebase login timed out. Please check your Firebase configuration and internet connection."
+      "Firebase login timed out. Please check your Firebase configuration and internet connection.",
     );
 
     firebaseUser = userCredential.user;
@@ -115,7 +114,7 @@ export async function submitLogin(role, id, password) {
 
     throw new Error(
       error.message ||
-      "PostgreSQL login succeeded, but Firebase authentication failed."
+        "PostgreSQL login succeeded, but Firebase authentication failed.",
     );
   }
 
@@ -128,14 +127,14 @@ export async function submitLogin(role, id, password) {
     firebaseIdToken = await withTimeout(
       firebaseUser.getIdToken(true),
       15000,
-      "Firebase ID token request timed out."
+      "Firebase ID token request timed out.",
     );
   } catch (error) {
     console.error("Firebase ID token error:", error);
 
     throw new Error(
       error.message ||
-      "Firebase login succeeded, but the Firebase ID token could not be obtained."
+        "Firebase login succeeded, but the Firebase ID token could not be obtained.",
     );
   }
 
@@ -166,9 +165,7 @@ export async function submitLogin(role, id, password) {
     firebaseIdToken,
     firebaseUser,
     redirectTo:
-      data.role === "teacher"
-        ? "/teacher/dashboard"
-        : "/student/dashboard",
+      data.role === "teacher" ? "/teacher/dashboard" : "/student/dashboard",
   };
 }
 
@@ -223,4 +220,3 @@ export function getLoggedInUser() {
 export function isLoggedIn() {
   return auth.currentUser !== null;
 }
-
