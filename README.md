@@ -435,7 +435,7 @@ A quick visual walkthrough of both the teacher and student sides of E.A.R.N — 
 ### 🗺️ End-to-End Student Journey
 
 <p align="center">
-  <img src="docs/images/student-journey.png" width="420" alt="Student Journey Flow"/>
+  <img src="docs/images/Student-journey.png" width="420" alt="Student Journey Flow"/>
 </p>
 
 <p align="center"><i>Login → Dashboard → Select Interest → Interest+ AI Assessment → Adaptive Questions → AI Analysis (interest, confidence, experience, capability, strengths, skill gaps) → Skill Gap Analysis → Personalized Roadmap.</i></p>
