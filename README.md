@@ -103,7 +103,7 @@ This is the part most dashboards get vague about, so here's exactly where AI is 
 - Selecting the **next Interest+ question** based on the student's previous answers
 - Deciding what information is still missing before a confident profile can be built
 
-### C. LLM — Qwen (qualitative layer)
+### C. LLM — OPEN AI (qualitative layer)
 - Generating **contextual Interest+ questions and options** as the assessment progresses
 - Interpreting **free-text student responses** for meaning, not just keywords
 - Producing **root-cause explanations** for why a student's risk score looks the way it does
@@ -137,7 +137,7 @@ flowchart TB
         IntE["Interest & Direction Engine"]
         SkillE["Skill Gap Engine"]
         OppE["Opportunity Matching Engine"]
-        LLM["Qwen LLM<br/>Adaptive Qs · Explanations · Roadmaps"]
+        LLM["OPEN AI LLM<br/>Adaptive Qs · Explanations · Roadmaps"]
     end
 
     subgraph DB["Data Layer — PostgreSQL"]
@@ -355,7 +355,7 @@ DATABASE_URL=postgresql://user:password@localhost:5432/academic_early_warning
 JWT_SECRET=your_secret_here
 JWT_ALGORITHM=HS256
 JWT_EXPIRY_MINUTES=60
-QWEN_API_KEY=your_key_here
+OPEN AI_API_KEY=your_key_here
 SMTP_HOST=your_smtp_host
 SMTP_USER=your_smtp_user
 SMTP_PASSWORD=your_smtp_password
