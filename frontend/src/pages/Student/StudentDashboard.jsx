@@ -7,7 +7,6 @@ import {
 
 import {
   LayoutDashboard,
-  User,
   Sparkles,
   Puzzle,
   Compass,
@@ -85,11 +84,6 @@ function StudentDashboard() {
       id: "dashboard",
       label: "Dashboard",
       icon: LayoutDashboard,
-    },
-    {
-      id: "profile",
-      label: "My Profile",
-      icon: User,
     },
     {
       id: "interest",
@@ -212,14 +206,6 @@ function StudentDashboard() {
               · {student.year}
             </p>
           </div>
-
-          <button
-            className="identity-profile-button"
-            onClick={() => setActivePage("profile")}
-          >
-            View Profile
-            <ChevronRight size={16} />
-          </button>
         </section>
 
         {/* Academic Snapshot */}
