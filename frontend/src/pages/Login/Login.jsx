@@ -170,6 +170,7 @@ function Login() {
                     ? "student001 - student080"
                     : "teacher001 - teacher005"}
                 </span>
+              </span>
             </div>
 
             <div className="password-input">
