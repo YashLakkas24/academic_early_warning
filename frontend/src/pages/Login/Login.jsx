@@ -140,7 +140,10 @@ function Login() {
               <label htmlFor="login-id">{idLabel}</label>
 
               <span className="demo-credential">
-                Demo: {isStudent ? "STU001" : "TCH001"}
+                Available IDs:{" "}
+                <span className="demo-credential__value">
+                  {isStudent ? "STU001 - STU080" : "TCH001 - TCH005"}
+                </span>
               </span>
             </div>
 
@@ -161,8 +164,12 @@ function Login() {
               <label htmlFor="login-password">Password</label>
 
               <span className="demo-credential">
-                Demo: {isStudent ? "student001" : "teacher001"}
-              </span>
+                Available Passwords:{" "}
+                <span className="demo-credential__value">
+                  {isStudent
+                    ? "student001 - student080"
+                    : "teacher001 - teacher005"}
+                </span>
             </div>
 
             <div className="password-input">
