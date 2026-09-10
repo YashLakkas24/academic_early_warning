@@ -19,6 +19,12 @@
 | 🧠 AI layer | Adaptive questioning, explanation, analysis, career/skill guidance |
 | 🔐 Security | PostgreSQL credential/role checks + Firebase bearer-token verification |
 
+### 🔗 Live Links
+
+- [🚀 Open E.A.R.N.](https://academic-early-warning-woad.vercel.app)
+- [⚙️ FastAPI Backend](https://academic-early-warning.onrender.com)
+- [📚 Swagger API Docs](https://academic-early-warning.onrender.com/docs)
+
 
 ---
 
@@ -344,6 +350,9 @@ sequenceDiagram
     FastAPI->>FastAPI: require_student / require_teacher role check
     FastAPI->>FastAPI: verify_student_access, uid == requested student_id, where applicable
 ```
+### Login Interface
+
+![E.A.R.N. Login](docs/images/login.png)
 
 - Passwords are hashed with **pwdlib**'s recommended (Argon2) hasher — never stored or compared in plaintext.
 - The role the user *selected on the login form* must match the role stored in Postgres for that `user_id`, or login fails with `401`.
@@ -358,11 +367,31 @@ sequenceDiagram
 4. When the teacher clicks into a specific student, the frontend calls `GET /api/teacher/students/{student_id}`, which — and only at this point — calls `generate_ai_analysis()` for that one student, parses the model's response into an `Analysis` paragraph, a two-line `AI Intervention`, and a one-line `AI Suggestion`, and returns them alongside the already-computed risk level and trend.
 5. If the AI call fails for any reason, the backend falls back to a deterministic, risk-factor-based intervention text so the UI is never left empty.
 
+### Teacher Workflow
+
+![E.A.R.N. Teacher Workflow](docs/images/teacher-workflow.png)
+
+### Teacher Dashboard
+
+![E.A.R.N. Teacher Dashboard](docs/images/teacher-dashboard.jpeg)
+
+### Risk Analysis & Student Insights
+
+![E.A.R.N. Risk Analysis](docs/images/risk-analysis.jpeg)
+
 ## 12. Student Workflow
 
 1. Student logs in (`role="student"`) and lands on `/student/dashboard`.
 2. `GET /api/students/{student_id}` returns their academic profile (name, roll number, attendance, previous-semester CGPA, extracurricular count) from the `students` table — access is rejected with `403` unless the authenticated `uid` matches the requested `student_id`.
 3. From the dashboard the student can enter the **Interest+** flow (see next section), and afterward view AI-discovered career directions, a skill-gap analysis, and a personalized roadmap for a chosen direction.
+
+### Student Dashboard
+
+![E.A.R.N. Student Dashboard](docs/images/student-dashboard.jpeg)
+
+### Student Journey
+
+![E.A.R.N. Student Journey](docs/images/Student-journey.png)
 
 ## 13. Interest+ Adaptive Assessment Workflow
 
@@ -382,6 +411,10 @@ flowchart TD
     K --> L[GET skill-gap and GET roadmap: LLM generates both]
     L --> M[Optional: POST career-pivot analyze for a different direction]
 ```
+
+### Interest+ Interface
+
+![E.A.R.N. Interest+](docs/images/interest-plus.png)
 
 - Question order is influenced by `ai_student/quiz/adaptive_logic.py`'s `choose_next_question`, which defines a logical progression (`interest_level → confidence → experience → experience_detail → motivation → development_goal`), but the actual question generation, wording, response type, and options are produced live by the LLM (`generate_next_question`), which also decides when enough information has been gathered.
 - **Hard limit:** regardless of what the LLM decides, the flow (`InterestPlusFlow` in `ai_student/interest_plus/flow.py`) enforces a maximum of **5 questions** per session.
