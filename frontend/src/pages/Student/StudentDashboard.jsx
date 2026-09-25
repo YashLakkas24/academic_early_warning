@@ -85,6 +85,7 @@ function StudentDashboard() {
           setNotificationsLoading(false);
         }
       });
+
     return () => {
       isMounted = false;
     };
