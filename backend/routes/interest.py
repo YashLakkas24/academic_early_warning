@@ -919,21 +919,52 @@ def refresh_notice_profile(student: Student, db: Session):
         if interest.interest and interest.interest.strip()
     )
 
+    # Update student's notice personalization profile
     student.preferences = preference_text
+
+    # --------------------------------------------------------
+    # No active interests
+    # --------------------------------------------------------
 
     if not preference_text:
         student.preference_embedding = None
+
         db.commit()
         db.refresh(student)
 
-        refresh_student_notifications(student=student, db=db)
+        # Re-evaluate existing notifications because the
+        # student's personalization profile has changed.
+        refresh_student_notifications(
+            student=student,
+            db=db,
+        )
+
         return
+
+    # --------------------------------------------------------
+    # Generate new preference embedding
+    # --------------------------------------------------------
 
     try:
         student.preference_embedding = create_preference_embedding(preference_text)
+
     except Exception as e:
         print(f"Notice profile embedding failed for " f"{student.student_id}: {e}")
+
         student.preference_embedding = None
+
+    # --------------------------------------------------------
+    # Save updated profile
+    # --------------------------------------------------------
 
     db.commit()
     db.refresh(student)
+
+    # --------------------------------------------------------
+    # Re-evaluate existing notices
+    # --------------------------------------------------------
+
+    refresh_student_notifications(
+        student=student,
+        db=db,
+    )
