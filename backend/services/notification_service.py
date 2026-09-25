@@ -187,7 +187,7 @@ def refresh_student_notifications(
         existing = (
             db.query(Notification)
             .filter(
-                Notification.student_id == student.student_id
+                Notification.student_id == student.student_id,
                 Notification.notice_id == notice.id,
             )
             .first()
