@@ -142,26 +142,26 @@ export async function uploadNotice(file) {
 // BATCH NOTICE UPLOAD
 // ============================================================
 
-export async function uploadNoticeBatch(files) {
-  const formData = new FormData();
+// export async function uploadNoticeBatch(files) {
+//   const formData = new FormData();
 
-  files.forEach((file) => {
-    formData.append("files", file);
-  });
+//   files.forEach((file) => {
+//     formData.append("files", file);
+//   });
 
-  const response = await fetch(`${API_BASE}/api/admin/notices/batch`, {
-    method: "POST",
-    headers: await getAuthHeaders(),
-    body: formData,
-  });
+//   const response = await fetch(`${API_BASE}/api/admin/notices/batch`, {
+//     method: "POST",
+//     headers: await getAuthHeaders(),
+//     body: formData,
+//   });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Batch upload failed");
-  }
+//   if (!response.ok) {
+//     const error = await response.json();
+//     throw new Error(error.detail || "Batch upload failed");
+//   }
 
-  return response.json();
-}
+//   return response.json();
+// }
 
 // ============================================================
 // TEXT NOTICE

@@ -74,6 +74,8 @@ def create_students():
                     student_id=student_id,
                     name=name,
                     roll_number=student_id[-3:],
+                    year=3,
+                    branch="AIDS",
                     attendance=int(row["attendance"]),
                     previous_sem_cgpa=float(row["previous_sem_cgpa"]),
                     extracurricular_count=int(row["extracurricular_count"]),
