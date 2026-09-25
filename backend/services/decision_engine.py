@@ -1,9 +1,8 @@
 from typing import Dict, Any
 
-from app.services.eligibility_engine import check_eligibility
-from app.services.embedding_service import cosine_similarity
-from app.services.priority_engine import calculate_priority
-
+from services.eligibility_engine import check_eligibility
+from services.embedding_service import cosine_similarity
+from services.priority_engine import calculate_priority
 HIGH_RELEVANCE = 0.60
 MEDIUM_RELEVANCE = 0.42
 

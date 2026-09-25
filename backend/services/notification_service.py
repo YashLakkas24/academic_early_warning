@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 
 from models import Student, Notice, Notification
 
-from app.services.decision_engine import evaluate_student_for_notice
+from services.decision_engine import evaluate_student_for_notice
 
 
 def route_notice_to_students(
@@ -31,7 +31,7 @@ def route_notice_to_students(
         students_evaluated += 1
         # Convert SQLAlchemy model -> dictionary
         student = {
-            "id": student_record.id,
+            "id": student_record.student_id,
             "name": student_record.name,
             "year": student_record.year,
             "branch": student_record.branch,
@@ -187,7 +187,7 @@ def refresh_student_notifications(
         existing = (
             db.query(Notification)
             .filter(
-                Notification.student_id == student.id,
+                Notification.student_id == student.student_id
                 Notification.notice_id == notice.id,
             )
             .first()
@@ -210,7 +210,7 @@ def refresh_student_notifications(
                     db.add(
                         Notification(
                             id=str(uuid.uuid4()),
-                            student_id=student.id,
+                            student_id=student.student_id,
                             notice_id=notice.id,
                             relevance_score=evaluation["relevance_score"],
                             priority=evaluation["priority"],
