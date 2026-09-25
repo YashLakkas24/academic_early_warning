@@ -3,9 +3,7 @@ import uuid
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
-from app.models.student import Student
-from app.models.notice import Notice
-from app.models.notification import Notification
+from models import Student, Notice, Notification
 
 from app.services.decision_engine import evaluate_student_for_notice
 

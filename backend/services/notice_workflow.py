@@ -1,9 +1,9 @@
 from sqlalchemy.orm import Session
 
-from app.agents.notice_agent import process_new_notice
-from app.services.embedding_service import create_embedding
-from app.services.notification_service import route_notice_to_students
-from app.models.notice import Notice
+from agents.notice_agent import process_new_notice
+from services.embedding_service import create_embedding
+from services.notification_service import route_notice_to_students
+from models import Notice
 
 import uuid
 
