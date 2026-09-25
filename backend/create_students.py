@@ -1,10 +1,10 @@
 import pandas as pd
 from pathlib import Path
 from sqlalchemy.orm import Session
-
-from database import SessionLocal
+from database import SessionLocal, Base, engine
 from models import Student
 
+Base.metadata.create_all(bind=engine)
 # Path to the single source-of-truth CSV
 CSV_PATH = Path(__file__).resolve().parent.parent / "ai" / "data" / "students.csv"
 

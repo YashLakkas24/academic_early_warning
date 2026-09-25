@@ -25,6 +25,8 @@ from ai_student.career_pivot.pipeline import (
     analyze_selected_direction,
 )
 from services.embedding_service import create_preference_embedding
+from services.embedding_service import create_preference_embedding
+from services.notification_service import refresh_student_notifications
 
 router = APIRouter(prefix="/api/students", tags=["Interest+"])
 
@@ -147,6 +149,8 @@ def add_interest(
     )
 
     if existing_interest:
+        refresh_notice_profile(student, db)
+
         return {
             "message": "Interest already exists",
             "student_id": student_id,
@@ -161,6 +165,8 @@ def add_interest(
     db.add(new_interest)
     db.commit()
     db.refresh(new_interest)
+
+    refresh_notice_profile(student, db)
 
     return {
         "message": "Interest saved successfully",
@@ -910,15 +916,26 @@ def refresh_notice_profile(student: Student, db: Session):
     )
 
     preference_text = ", ".join(
-        interest.interest for interest in interests if interest.interest
+        interest.interest.strip()
+        for interest in interests
+        if interest.interest and interest.interest.strip()
     )
 
     student.preferences = preference_text
 
-    if preference_text:
+    if not preference_text:
+        student.preference_embedding = None
+        db.commit()
+        db.refresh(student)
+        return
+
+    try:
         student.preference_embedding = create_preference_embedding(preference_text)
-    else:
+    except Exception as e:
+        print(f"Notice profile embedding failed for " f"{student.student_id}: {e}")
         student.preference_embedding = None
 
     db.commit()
     db.refresh(student)
+    
+    refresh_student_notifications(student=student, db=db)
