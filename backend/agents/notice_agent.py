@@ -4,8 +4,8 @@ from strands import Agent, tool
 from dotenv import load_dotenv
 from strands.models import OpenAIModel
 
-from app.agents.prompts import NOTICE_SYSTEM_PROMPT
-from app.schemas.notice import NoticeMetadata
+from agents.prompts import NOTICE_SYSTEM_PROMPT
+from schemas import NoticeMetadata
 
 load_dotenv()
 
