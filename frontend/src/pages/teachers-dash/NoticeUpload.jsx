@@ -137,10 +137,6 @@ export default function NoticeUpload() {
         setNoticeText("");
       }
 
-      setStatus("success");
-      setMessage(
-        "Notice accepted. AI processing and student routing have started.",
-      );
     } catch (error) {
       console.error("Notice upload failed:", error);
 
