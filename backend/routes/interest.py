@@ -24,8 +24,6 @@ from ai_student.career_pivot.pipeline import (
     discover_career_directions,
     analyze_selected_direction,
 )
-from services.embedding_service import create_preference_embedding
-from services.embedding_service import create_preference_embedding
 from services.notification_service import refresh_student_notifications
 
 router = APIRouter(prefix="/api/students", tags=["Interest+"])
@@ -927,6 +925,8 @@ def refresh_notice_profile(student: Student, db: Session):
         student.preference_embedding = None
         db.commit()
         db.refresh(student)
+
+        refresh_student_notifications(student=student, db=db)
         return
 
     try:
@@ -937,5 +937,3 @@ def refresh_notice_profile(student: Student, db: Session):
 
     db.commit()
     db.refresh(student)
-    
-    refresh_student_notifications(student=student, db=db)
