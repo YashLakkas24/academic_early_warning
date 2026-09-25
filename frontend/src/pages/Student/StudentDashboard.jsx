@@ -4,6 +4,10 @@ import {
   getStudentProfile,
   getStudentInterestAnalysis,
 } from "../../services/studentService";
+import {
+  getStudentNotifications,
+  markNotificationRead,
+} from "../../api/notifications";
 
 import {
   LayoutDashboard,
@@ -25,7 +29,8 @@ function StudentDashboard() {
   const [activePage, setActivePage] = useState("dashboard");
   const [studentData, setStudentData] = useState(null);
   const [interestAnalysis, setInterestAnalysis] = useState(null);
-
+  const [notifications, setNotifications] = useState([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(true);
   const savedUser = (() => {
     try {
       return JSON.parse(localStorage.getItem("user") || "{}");
@@ -60,6 +65,23 @@ function StudentDashboard() {
       .catch(() => {
         if (isMounted) {
           setInterestAnalysis(null);
+        }
+      });
+    getStudentNotifications(studentId)
+      .then((data) => {
+        if (isMounted) {
+          setNotifications(data.notifications || []);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load notifications:", error);
+        if (isMounted) {
+          setNotifications([]);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setNotificationsLoading(false);
         }
       });
 
@@ -252,7 +274,134 @@ function StudentDashboard() {
             </div>
           </div>
         </section>
+        {/* =====================================================
+    PERSONALIZED NOTICES
+===================================================== */}
 
+        <section className="dashboard-section">
+          <div className="section-heading">
+            <div>
+              <span className="section-label">PERSONALIZED FEED</span>
+              <h2>Important Notices</h2>
+            </div>
+
+            <span>
+              {
+                notifications.filter(
+                  (notification) => notification.status === "UNREAD",
+                ).length
+              }{" "}
+              unread
+            </span>
+          </div>
+
+          {notificationsLoading ? (
+            <div className="feature-card">
+              <p>Loading your personalized notices...</p>
+            </div>
+          ) : notifications.length === 0 ? (
+            <div className="feature-card">
+              <div className="feature-card-top">
+                <div className="feature-icon">
+                  <CheckCircle2 size={21} />
+                </div>
+              </div>
+
+              <h3>No new notices</h3>
+
+              <p>
+                There are currently no relevant college notices for your
+                profile.
+              </p>
+            </div>
+          ) : (
+            <div className="dashboard-grid">
+              {notifications.slice(0, 3).map((notification) => (
+                <div
+                  className="feature-card"
+                  key={notification.notification_id}
+                >
+                  <div className="feature-card-top">
+                    <div className="feature-icon">
+                      <CheckCircle2 size={21} />
+                    </div>
+
+                    <span className="coming-soon">{notification.priority}</span>
+                  </div>
+
+                  <h3>{notification.title}</h3>
+
+                  <p>
+                    {notification.summary ||
+                      "No summary available for this notice."}
+                  </p>
+
+                  {notification.deadline && (
+                    <p>
+                      <strong>Deadline:</strong> {notification.deadline}
+                    </p>
+                  )}
+
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                      marginTop: "12px",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    {notification.status === "UNREAD" && (
+                      <button
+                        onClick={async () => {
+                          try {
+                            await markNotificationRead(
+                              studentId,
+                              notification.notification_id,
+                            );
+
+                            setNotifications((current) =>
+                              current.map((item) =>
+                                item.notification_id ===
+                                notification.notification_id
+                                  ? {
+                                      ...item,
+                                      status: "READ",
+                                    }
+                                  : item,
+                              ),
+                            );
+                          } catch (error) {
+                            console.error(
+                              "Failed to mark notification as read:",
+                              error,
+                            );
+                          }
+                        }}
+                      >
+                        Mark as Read
+                      </button>
+                    )}
+
+                    {notification.registration_link && (
+                      <button
+                        onClick={() =>
+                          window.open(
+                            notification.registration_link,
+                            "_blank",
+                            "noopener,noreferrer",
+                          )
+                        }
+                      >
+                        Open Notice
+                        <ChevronRight size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
         {/* Interest+ */}
         <section className="interest-card">
           <div className="interest-card-content">
