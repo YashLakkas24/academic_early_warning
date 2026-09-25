@@ -100,5 +100,5 @@ def create_students():
     finally:
         db.close()
 
-
-create_students()
+if __name__=="__main__":
+    create_students()

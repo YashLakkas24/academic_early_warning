@@ -96,4 +96,5 @@ def create_users():
         db.close()
 
 
-create_users()
+if __name__ == "__main__":
+    create_users()

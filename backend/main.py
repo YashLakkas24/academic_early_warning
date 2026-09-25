@@ -51,6 +51,15 @@ app.include_router(notices_router)
 
 Base.metadata.create_all(bind=engine)
 
+# ============================================================
+# SEED INITIAL DATA
+# ============================================================
+
+from create_students import create_students
+from create_users import create_users
+
+create_students()
+create_users()
 
 # ============================================================
 # CORS
