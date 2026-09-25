@@ -95,8 +95,10 @@ function StudentDashboard() {
     name: studentData?.name || savedUser.full_name || "Aarav Sharma",
     studentId: studentData?.student_id || studentId,
     rollNumber: studentData?.roll_number || "01",
-    branch: "AIDS",
-    year: "3rd Year",
+    branch: studentData?.branch || "AIDS",
+    year: studentData?.year
+      ? `${studentData.year}${studentData.year === 1 ? "st" : studentData.year === 2 ? "nd" : studentData.year === 3 ? "rd" : "th"} Year`
+      : "3rd Year",
     attendance: studentData?.attendance ?? 92,
     previousCgpa: studentData?.previous_sem_cgpa ?? 8.4,
     extracurricular: studentData?.extracurricular_count ?? 3,

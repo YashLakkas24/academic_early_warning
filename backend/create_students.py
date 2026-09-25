@@ -64,7 +64,8 @@ def create_students():
                 existing_student.extracurricular_count = int(
                     row["extracurricular_count"]
                 )
-
+                existing_student.year = 3
+                existing_student.branch = "AIDS"
                 print(f"Updated: {student_id}")
 
             else:

@@ -15,6 +15,7 @@ from fastapi import (
     UploadFile,
     File,
     BackgroundTasks,
+    Form,
 )
 from sqlalchemy.orm import Session
 
@@ -79,7 +80,7 @@ def process_notice_in_background(
 @router.post("/api/admin/notice/text")
 def upload_text_notice(
     background_tasks: BackgroundTasks,
-    text: str,
+    text: str = Form(...),
     current_user: dict = Depends(require_teacher),
 ):
     if not text.strip():

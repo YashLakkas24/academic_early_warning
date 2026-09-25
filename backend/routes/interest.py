@@ -24,6 +24,7 @@ from ai_student.career_pivot.pipeline import (
     discover_career_directions,
     analyze_selected_direction,
 )
+from services.embedding_service import create_preference_embedding
 
 router = APIRouter(prefix="/api/students", tags=["Interest+"])
 
