@@ -1,5 +1,8 @@
 import sys
 from pathlib import Path
+import os
+from routes.notices import router as notices_router
+from fastapi.staticfiles import StaticFiles
 
 # Add project root directory to Python path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -22,6 +25,8 @@ from models import (
     QuizAnswer,
     InterestAnalysis,
     CareerPivotAnalysis,
+    Notice,
+    Notification,
 )
 
 from routes.auth import router as auth_router
@@ -31,7 +36,14 @@ from routes.interest import router as interest_router
 from routes.interest_options import router as interest_options_router
 
 app = FastAPI()
+os.makedirs("uploads/notices", exist_ok=True)
 
+app.mount(
+    "/uploads",
+    StaticFiles(directory="uploads"),
+    name="uploads",
+)
+app.include_router(notices_router)
 
 # ============================================================
 # CREATE DATABASE TABLES

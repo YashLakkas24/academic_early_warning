@@ -153,7 +153,7 @@ def refresh_student_notifications(
     notices = db.query(Notice).all()
 
     student_data = {
-        "id": student.id,
+        "id": student.student_id,
         "name": student.name,
         "year": student.year,
         "branch": student.branch,
