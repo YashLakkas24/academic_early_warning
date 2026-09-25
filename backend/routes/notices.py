@@ -26,8 +26,9 @@ from services.notice_workflow import process_notice_workflow
 
 router = APIRouter(tags=["Notices"])
 
-BASE_DIR = Path(__file__).resolve().parents[2]
+BASE_DIR = Path(__file__).resolve().parents[1]
 UPLOAD_DIR = BASE_DIR / "uploads" / "notices"
+
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 POPPLER_PATH = os.getenv("POPPLER_PATH")

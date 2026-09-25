@@ -85,7 +85,9 @@ def process_notice_workflow(
         category=notice_data["category"],
         is_mandatory=notice_data["is_mandatory"],
         eligibility=notice_data["eligibility"],
-        deadline=notice_data["deadline"],
+        deadline=(
+            notice_data["deadline"].isoformat() if notice_data.get("deadline") else None
+        ),
         registration_link=registration_link,
         required_action=notice_data["required_action"],
         importance=notice_data["importance"],
