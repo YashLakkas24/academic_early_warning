@@ -301,6 +301,12 @@
   color: var(--text-primary);
 }
 
+.notice-status.partial {
+  background: var(--bg-panel-soft);
+  color: var(--text-primary);
+  border: 1px solid var(--border-medium);
+}
+
 @media (max-width: 800px) {
   .notice-upload-hero {
     padding: 28px;

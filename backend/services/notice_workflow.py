@@ -11,7 +11,7 @@ import uuid
 def process_notice_workflow(
     db: Session,
     raw_text: str,
-    pdf_url: str = None,
+    document_url: str = None,
 ):
     """
     Complete notice-processing workflow.
@@ -94,7 +94,7 @@ def process_notice_workflow(
         summary=notice_data["summary"],
         raw_text=raw_text,
         notice_embedding=notice_embedding,
-        pdf_url=pdf_url,
+        pdf_url=document_url,
     )
 
     db.add(notice)

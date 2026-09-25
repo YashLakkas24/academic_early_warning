@@ -2,7 +2,6 @@ import sys
 from pathlib import Path
 import os
 from routes.notices import router as notices_router
-from fastapi.staticfiles import StaticFiles
 
 # Add project root directory to Python path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -34,17 +33,10 @@ from routes.teacher import router as teacher_router
 from routes.student import router as student_router
 from routes.interest import router as interest_router
 from routes.interest_options import router as interest_options_router
-from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
-os.makedirs("uploads/notices", exist_ok=True)
 
 
-app.mount(
-    "/uploads",
-    StaticFiles(directory="uploads"),
-    name="uploads",
-)
 app.include_router(notices_router)
 
 # ============================================================

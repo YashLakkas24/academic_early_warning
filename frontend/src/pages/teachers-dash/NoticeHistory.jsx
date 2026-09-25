@@ -201,14 +201,15 @@ export default function NoticeHistory() {
                         </button>
                       )}
 
-                      {notice.pdf_url && (
+                      {(notice.document_url || notice.pdf_url) && (
                         <button
                           onClick={() => {
-                            const documentUrl = notice.pdf_url.startsWith(
-                              "http",
-                            )
-                              ? notice.pdf_url
-                              : `${API_BASE}${notice.pdf_url}`;
+                            const documentPath =
+                              notice.document_url || notice.pdf_url;
+
+                            const documentUrl = documentPath.startsWith("http")
+                              ? documentPath
+                              : `${API_BASE}${documentPath}`;
 
                             window.open(
                               documentUrl,

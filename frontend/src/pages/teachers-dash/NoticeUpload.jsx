@@ -118,8 +118,24 @@ export default function NoticeUpload() {
           fileInputRef.current.value = "";
         }
 
-        setStatus(result.failed > 0 ? "error" : "success");
-
+        if (result.failed === 0) {
+          setStatus("success");
+          setMessage(
+            `${result.accepted} notice${
+              result.accepted === 1 ? "" : "s"
+            } accepted for processing.`,
+          );
+        } else if (result.accepted > 0) {
+          setStatus("partial");
+          setMessage(
+            `${result.accepted} notice${
+              result.accepted === 1 ? "" : "s"
+            } accepted and ${result.failed} failed.`,
+          );
+        } else {
+          setStatus("error");
+          setMessage(`All ${result.failed} selected notices failed to upload.`);
+        }
         setMessage(
           `${result.accepted} notice${
             result.accepted === 1 ? "" : "s"
@@ -135,8 +151,9 @@ export default function NoticeUpload() {
         await uploadTextNotice(noticeText);
 
         setNoticeText("");
-        
+
         setStatus("success");
+
         setMessage(
           "Notice accepted. AI processing and student routing have started.",
         );
@@ -371,6 +388,13 @@ export default function NoticeUpload() {
             </div>
           )}
 
+          {status === "partial" && (
+            <div className="notice-status partial">
+              <AlertCircle size={18} />
+              {message}
+            </div>
+          )}
+          
           {status === "error" && (
             <div className="notice-status error">
               <AlertCircle size={18} />

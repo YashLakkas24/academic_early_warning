@@ -1,6 +1,6 @@
 from pathlib import Path
-from io import BytesIO
 from datetime import datetime
+from io import BytesIO
 import os
 import uuid
 
@@ -17,6 +17,7 @@ from fastapi import (
     BackgroundTasks,
     Form,
 )
+
 from sqlalchemy.orm import Session
 
 from database import SessionLocal
@@ -24,13 +25,18 @@ from models import Notice, Notification
 from auth_dependencies import require_teacher, require_student
 
 from services.notice_workflow import process_notice_workflow
+from services.storage_service import (
+    upload_notice_file,
+    download_notice_file,
+)
 
 router = APIRouter(tags=["Notices"])
 
-BASE_DIR = Path(__file__).resolve().parents[1]
-UPLOAD_DIR = BASE_DIR / "uploads" / "notices"
+POPPLER_PATH = os.getenv("POPPLER_PATH")
+TESSERACT_PATH = os.getenv("TESSERACT_PATH")
 
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+if TESSERACT_PATH:
+    pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
 
 POPPLER_PATH = os.getenv("POPPLER_PATH")
 TESSERACT_PATH = os.getenv("TESSERACT_PATH")
@@ -49,16 +55,39 @@ def get_db():
 
 
 def process_notice_in_background(
-    raw_text: str,
-    file_url: str | None = None,
+    storage_path: str,
+    document_url: str | None = None,
+    filename: str = "",
+    content_type: str | None = None,
 ):
+    """
+    Background processing pipeline.
+
+    The HTTP request only uploads the document.
+    Extraction/OCR + AI processing happen here.
+    """
+
     db = SessionLocal()
 
     try:
+        file_bytes = download_notice_file(storage_path)
+
+        extracted_text = extract_notice_text(
+            file_bytes=file_bytes,
+            filename=filename,
+            content_type=content_type,
+        )
+
+        if not extracted_text.strip():
+            print(
+                f"Notice processing skipped: " f"could not extract text from {filename}"
+            )
+            return
+
         notice, notifications, routing_report = process_notice_workflow(
             db=db,
-            raw_text=raw_text,
-            pdf_url=file_url,
+            raw_text=extracted_text,
+            document_url=document_url,
         )
 
         print(f"Notice processed: {notice.title}")
@@ -66,7 +95,8 @@ def process_notice_in_background(
 
     except Exception as e:
         db.rollback()
-        print(f"Background notice processing failed: {e}")
+
+        print(f"Background notice processing failed " f"for {filename}: {e}")
 
     finally:
         db.close()
@@ -79,6 +109,14 @@ ALLOWED_IMAGE_TYPES = {
     "image/webp",
 }
 
+ALLOWED_EXTENSIONS = {
+    ".pdf",
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".webp",
+}
+
 MAX_BATCH_FILES = 20
 
 
@@ -87,6 +125,7 @@ def extract_notice_text(
     filename: str,
     content_type: str | None,
 ) -> str:
+
     extension = Path(filename).suffix.lower()
 
     # --------------------------------------------------
@@ -104,8 +143,9 @@ def extract_notice_text(
             if page_text:
                 extracted_text += page_text + "\n"
 
-        # OCR fallback
+        # OCR fallback for scanned PDFs
         if not extracted_text.strip():
+
             from pdf2image import convert_from_bytes
 
             images = convert_from_bytes(
@@ -142,7 +182,7 @@ def extract_notice_text(
         return extracted_text.strip()
 
     raise ValueError(
-        "Unsupported file type. Only PDF, JPG, JPEG, PNG and WEBP are supported."
+        "Unsupported file type. " "Only PDF, JPG, JPEG, PNG and WEBP are supported."
     )
 
 
@@ -182,72 +222,43 @@ async def upload_pdf_notice(
     file: UploadFile = File(...),
     current_user: dict = Depends(require_teacher),
 ):
-    if not file.filename.lower().endswith(".pdf"):
+    filename = file.filename or "notice.pdf"
+
+    if not filename.lower().endswith(".pdf"):
         raise HTTPException(
             status_code=400,
             detail="Only PDF files are supported.",
         )
 
     try:
-        pdf_bytes = await file.read()
+        file_bytes = await file.read()
 
-        filename = f"{uuid.uuid4()}.pdf"
-        file_path = UPLOAD_DIR / filename
-
-        with open(file_path, "wb") as f:
-            f.write(pdf_bytes)
-
-        file_url = f"/uploads/notices/{filename}"
-
-        reader = PdfReader(BytesIO(pdf_bytes))
-
-        extracted_text = ""
-
-        for page in reader.pages:
-            page_text = page.extract_text()
-
-            if page_text:
-                extracted_text += page_text + "\n"
-
-        # OCR fallback
-        if not extracted_text.strip():
-            try:
-                from pdf2image import convert_from_bytes
-
-                images = convert_from_bytes(
-                    pdf_bytes,
-                    poppler_path=POPPLER_PATH or None,
-                )
-
-                ocr_text = []
-
-                for image in images:
-                    text = pytesseract.image_to_string(image)
-
-                    if text.strip():
-                        ocr_text.append(text)
-
-                extracted_text = "\n".join(ocr_text)
-
-            except Exception as e:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"PDF extraction/OCR failed: {str(e)}",
-                )
-
-        if not extracted_text.strip():
+        if not file_bytes:
             raise HTTPException(
                 status_code=400,
-                detail="Could not extract text from PDF.",
+                detail="PDF file is empty.",
             )
+
+        storage_path = f"notices/{uuid.uuid4()}.pdf"
+
+        document_url = upload_notice_file(
+            file_bytes=file_bytes,
+            storage_path=storage_path,
+            content_type="application/pdf",
+        )
 
         background_tasks.add_task(
             process_notice_in_background,
-            extracted_text,
-            file_url,
+            storage_path,
+            document_url,
+            filename,
+            file.content_type,
         )
 
-        return {"message": "PDF accepted for background processing."}
+        return {
+            "message": "PDF accepted for background processing.",
+            "document_url": document_url,
+        }
 
     except HTTPException:
         raise
@@ -255,7 +266,7 @@ async def upload_pdf_notice(
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"PDF processing failed: {str(e)}",
+            detail=f"PDF upload failed: {str(e)}",
         )
 
 
@@ -270,14 +281,9 @@ async def upload_image_notice(
     file: UploadFile = File(...),
     current_user: dict = Depends(require_teacher),
 ):
-    allowed_types = {
-        "image/jpeg",
-        "image/png",
-        "image/jpg",
-        "image/webp",
-    }
+    filename = file.filename or "notice-image"
 
-    if file.content_type not in allowed_types:
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(
             status_code=400,
             detail="Only JPG, PNG, JPEG and WEBP images are supported.",
@@ -286,33 +292,42 @@ async def upload_image_notice(
     try:
         image_bytes = await file.read()
 
-        extension = file.filename.split(".")[-1].lower()
-        filename = f"{uuid.uuid4()}.{extension}"
-
-        file_path = UPLOAD_DIR / filename
-
-        with open(file_path, "wb") as f:
-            f.write(image_bytes)
-
-        file_url = f"/uploads/notices/{filename}"
-
-        image = Image.open(BytesIO(image_bytes))
-
-        extracted_text = pytesseract.image_to_string(image)
-
-        if not extracted_text.strip():
+        if not image_bytes:
             raise HTTPException(
                 status_code=400,
-                detail="Could not extract text from image.",
+                detail="Image file is empty.",
             )
+
+        extension = Path(filename).suffix.lower()
+
+        if extension not in {
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".webp",
+        }:
+            extension = ".png"
+
+        storage_path = f"notices/{uuid.uuid4()}{extension}"
+
+        document_url = upload_notice_file(
+            file_bytes=image_bytes,
+            storage_path=storage_path,
+            content_type=file.content_type,
+        )
 
         background_tasks.add_task(
             process_notice_in_background,
-            extracted_text,
-            file_url,
+            storage_path,
+            document_url,
+            filename,
+            file.content_type,
         )
 
-        return {"message": "Image accepted for background processing."}
+        return {
+            "message": "Image accepted for background processing.",
+            "document_url": document_url,
+        }
 
     except HTTPException:
         raise
@@ -320,7 +335,7 @@ async def upload_image_notice(
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Image processing failed: {str(e)}",
+            detail=f"Image upload failed: {str(e)}",
         )
 
 
@@ -349,6 +364,7 @@ def get_all_notices(
                 "deadline": notice.deadline,
                 "registration_link": notice.registration_link,
                 "required_action": notice.required_action,
+                "document_url": notice.pdf_url,
                 "pdf_url": notice.pdf_url,
                 "importance": notice.importance,
                 "created_at": notice.created_at,
@@ -363,98 +379,68 @@ def get_all_notices(
 # ============================================================
 
 
-@router.post("/api/admin/notices/batch")
-async def upload_batch_notices(
+@router.post("/api/admin/notice/image")
+async def upload_image_notice(
     background_tasks: BackgroundTasks,
-    files: list[UploadFile] = File(...),
+    file: UploadFile = File(...),
     current_user: dict = Depends(require_teacher),
 ):
-    if not files:
+    filename = file.filename or "notice-image"
+
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(
             status_code=400,
-            detail="Please select at least one notice file.",
+            detail="Only JPG, PNG, JPEG and WEBP images are supported.",
         )
 
-    if len(files) > MAX_BATCH_FILES:
+    try:
+        image_bytes = await file.read()
+
+        if not image_bytes:
+            raise HTTPException(
+                status_code=400,
+                detail="Image file is empty.",
+            )
+
+        extension = Path(filename).suffix.lower()
+
+        if extension not in {
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".webp",
+        }:
+            extension = ".png"
+
+        storage_path = f"notices/{uuid.uuid4()}{extension}"
+
+        document_url = upload_notice_file(
+            file_bytes=image_bytes,
+            storage_path=storage_path,
+            content_type=file.content_type,
+        )
+
+        background_tasks.add_task(
+            process_notice_in_background,
+            storage_path,
+            document_url,
+            filename,
+            file.content_type,
+        )
+
+        return {
+            "message": "Image accepted for background processing.",
+            "document_url": document_url,
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
         raise HTTPException(
-            status_code=400,
-            detail=f"You can upload a maximum of {MAX_BATCH_FILES} notices at once.",
+            status_code=500,
+            detail=f"Image upload failed: {str(e)}",
         )
-
-    results = []
-
-    for file in files:
-        filename = file.filename or "unnamed-file"
-
-        try:
-            file_bytes = await file.read()
-
-            if not file_bytes:
-                raise ValueError("File is empty.")
-
-            extracted_text = extract_notice_text(
-                file_bytes=file_bytes,
-                filename=filename,
-                content_type=file.content_type,
-            )
-
-            if not extracted_text:
-                raise ValueError("Could not extract readable text from the notice.")
-
-            # Save original document
-            extension = Path(filename).suffix.lower()
-
-            if extension not in {
-                ".pdf",
-                ".jpg",
-                ".jpeg",
-                ".png",
-                ".webp",
-            }:
-                raise ValueError("Unsupported file extension.")
-
-            saved_filename = f"{uuid.uuid4()}{extension}"
-            file_path = UPLOAD_DIR / saved_filename
-
-            with open(file_path, "wb") as f:
-                f.write(file_bytes)
-
-            file_url = f"/uploads/notices/{saved_filename}"
-
-            # Each file becomes its own notice
-            background_tasks.add_task(
-                process_notice_in_background,
-                extracted_text,
-                file_url,
-            )
-
-            results.append(
-                {
-                    "filename": filename,
-                    "status": "accepted",
-                }
-            )
-
-        except Exception as e:
-            results.append(
-                {
-                    "filename": filename,
-                    "status": "failed",
-                    "error": str(e),
-                }
-            )
-
-    accepted = sum(1 for result in results if result["status"] == "accepted")
-
-    failed = len(results) - accepted
-
-    return {
-        "message": "Batch notice upload completed.",
-        "total": len(results),
-        "accepted": accepted,
-        "failed": failed,
-        "results": results,
-    }
 
 
 # ============================================================
@@ -495,6 +481,7 @@ def get_notifications(
                 "notice_id": notice.id,
                 "title": notice.title,
                 "summary": notice.summary,
+                "document_url": notice.pdf_url,
                 "pdf_url": notice.pdf_url,
                 "category": notice.category,
                 "deadline": notice.deadline,
@@ -553,6 +540,7 @@ def get_student_all_notices(
                 "notice_id": notice.id,
                 "title": notice.title,
                 "summary": notice.summary,
+                "document_url": notice.pdf_url,
                 "pdf_url": notice.pdf_url,
                 "category": notice.category,
                 "is_mandatory": notice.is_mandatory,
