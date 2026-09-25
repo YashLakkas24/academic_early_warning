@@ -31,6 +31,7 @@ function StudentDashboard() {
   const [interestAnalysis, setInterestAnalysis] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [notificationsLoading, setNotificationsLoading] = useState(true);
+
   const savedUser = (() => {
     try {
       return JSON.parse(localStorage.getItem("user") || "{}");
