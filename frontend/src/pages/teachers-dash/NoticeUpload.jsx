@@ -120,6 +120,7 @@ export default function NoticeUpload() {
 
         if (result.failed === 0) {
           setStatus("success");
+
           setMessage(
             `${result.accepted} notice${
               result.accepted === 1 ? "" : "s"
@@ -127,6 +128,7 @@ export default function NoticeUpload() {
           );
         } else if (result.accepted > 0) {
           setStatus("partial");
+
           setMessage(
             `${result.accepted} notice${
               result.accepted === 1 ? "" : "s"
@@ -134,8 +136,10 @@ export default function NoticeUpload() {
           );
         } else {
           setStatus("error");
+
           setMessage(`All ${result.failed} selected notices failed to upload.`);
         }
+
         setMessage(
           `${result.accepted} notice${
             result.accepted === 1 ? "" : "s"
@@ -394,7 +398,7 @@ export default function NoticeUpload() {
               {message}
             </div>
           )}
-          
+
           {status === "error" && (
             <div className="notice-status error">
               <AlertCircle size={18} />
