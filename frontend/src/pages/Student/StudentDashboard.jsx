@@ -22,6 +22,7 @@ import {
   ChevronRight,
   CheckCircle2,
   SlidersHorizontal,
+  ExternalLink,
 } from "lucide-react";
 
 import "./StudentDashboard.css";
@@ -441,6 +442,21 @@ function StudentDashboard() {
                         </button>
                       )}
 
+                      {notification.document_url && (
+                        <button
+                          onClick={() =>
+                            window.open(
+                              notification.document_url,
+                              "_blank",
+                              "noopener,noreferrer",
+                            )
+                          }
+                        >
+                          View Document
+                          <ExternalLink size={16} />
+                        </button>
+                      )}
+
                       {notification.registration_link && (
                         <button
                           onClick={() =>
@@ -451,7 +467,7 @@ function StudentDashboard() {
                             )
                           }
                         >
-                          Open Notice
+                          Open Registration
                           <ChevronRight size={16} />
                         </button>
                       )}
@@ -509,6 +525,21 @@ function StudentDashboard() {
                   )}
 
                   <div className="notice-actions">
+                    {notice.document_url && (
+                      <button
+                        onClick={() =>
+                          window.open(
+                            notice.document_url,
+                            "_blank",
+                            "noopener,noreferrer",
+                          )
+                        }
+                      >
+                        View Document
+                        <ExternalLink size={16} />
+                      </button>
+                    )}
+
                     {notice.registration_link && (
                       <button
                         onClick={() =>
@@ -519,7 +550,7 @@ function StudentDashboard() {
                           )
                         }
                       >
-                        Open Notice
+                        Open Registration
                         <ChevronRight size={16} />
                       </button>
                     )}
