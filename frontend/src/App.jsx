@@ -126,7 +126,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-      </Routes>
 
       <Route
         path="/student/preferences"
@@ -136,6 +135,7 @@ function App() {
           </ProtectedRoute>
         }
       />
+      </Routes>
     </BrowserRouter>
   );
 }
