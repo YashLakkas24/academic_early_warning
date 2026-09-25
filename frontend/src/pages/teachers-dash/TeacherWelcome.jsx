@@ -169,6 +169,20 @@ export default function TeacherWelcome() {
               Upload Notice
               <span className="arrow">→</span>
             </button>
+
+            <button
+              type="button"
+              className="cta-btn"
+              onClick={() => navigate("/teacher/notice-history")}
+              style={{
+                background: "transparent",
+                border: "1px solid var(--border-medium)",
+                color: "var(--text-primary)",
+              }}
+            >
+              Notice History
+              <span className="arrow">→</span>
+            </button>
           </div>
         </div>
       </div>
