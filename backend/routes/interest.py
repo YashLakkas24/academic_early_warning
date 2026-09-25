@@ -1,11 +1,10 @@
-
 import json
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-
+from services.embedding_service import create_preference_embedding
 from database import SessionLocal
 
 from models import (
@@ -26,16 +25,13 @@ from ai_student.career_pivot.pipeline import (
     analyze_selected_direction,
 )
 
-
-router = APIRouter(
-    prefix="/api/students",
-    tags=["Interest+"]
-)
+router = APIRouter(prefix="/api/students", tags=["Interest+"])
 
 
 # ============================================================
 # DATABASE DEPENDENCY
 # ============================================================
+
 
 def get_db():
     db = SessionLocal()
@@ -50,10 +46,8 @@ def get_db():
 # STUDENT ACCESS CHECK
 # ============================================================
 
-def verify_student_access(
-    student_id: str,
-    current_user: dict
-):
+
+def verify_student_access(student_id: str, current_user: dict):
     """
     Make sure the Firebase-authenticated student can access
     only their own student data.
@@ -63,14 +57,14 @@ def verify_student_access(
 
     if authenticated_student_id != student_id:
         raise HTTPException(
-            status_code=403,
-            detail="You can only access your own student data"
+            status_code=403, detail="You can only access your own student data"
         )
 
 
 # ============================================================
 # REQUEST SCHEMAS
 # ============================================================
+
 
 class InterestRequest(BaseModel):
     interest: str
@@ -93,40 +87,30 @@ class CareerDirectionAnalyzeRequest(BaseModel):
 # CHECK INTEREST+ STATUS
 # ============================================================
 
+
 @router.get("/{student_id}/interests/status")
 def get_interest_status(
     student_id: str,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_student)
+    current_user: dict = Depends(require_student),
 ):
 
     verify_student_access(student_id, current_user)
 
     interests = (
-        db.query(StudentInterest)
-        .filter(
-            StudentInterest.student_id == student_id
-        )
-        .all()
+        db.query(StudentInterest).filter(StudentInterest.student_id == student_id).all()
     )
 
     if not interests:
-        return {
-            "student_id": student_id,
-            "completed": False,
-            "interests": []
-        }
+        return {"student_id": student_id, "completed": False, "interests": []}
 
     return {
         "student_id": student_id,
         "completed": True,
         "interests": [
-            {
-                "interest": interest.interest,
-                "status": interest.status
-            }
+            {"interest": interest.interest, "status": interest.status}
             for interest in interests
-        ]
+        ],
     }
 
 
@@ -134,37 +118,29 @@ def get_interest_status(
 # SAVE NEW INTEREST
 # ============================================================
 
+
 @router.post("/{student_id}/interests")
 def add_interest(
     student_id: str,
     interest_data: InterestRequest,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_student)
+    current_user: dict = Depends(require_student),
 ):
 
     verify_student_access(student_id, current_user)
 
     # Check student exists
-    student = (
-        db.query(Student)
-        .filter(
-            Student.student_id == student_id
-        )
-        .first()
-    )
+    student = db.query(Student).filter(Student.student_id == student_id).first()
 
     if not student:
-        raise HTTPException(
-            status_code=404,
-            detail="Student not found"
-        )
+        raise HTTPException(status_code=404, detail="Student not found")
 
     # Check whether this interest already exists
     existing_interest = (
         db.query(StudentInterest)
         .filter(
             StudentInterest.student_id == student_id,
-            StudentInterest.interest == interest_data.interest
+            StudentInterest.interest == interest_data.interest,
         )
         .first()
     )
@@ -174,13 +150,11 @@ def add_interest(
             "message": "Interest already exists",
             "student_id": student_id,
             "interest": existing_interest.interest,
-            "status": existing_interest.status
+            "status": existing_interest.status,
         }
 
     new_interest = StudentInterest(
-        student_id=student_id,
-        interest=interest_data.interest,
-        status="active"
+        student_id=student_id, interest=interest_data.interest, status="active"
     )
 
     db.add(new_interest)
@@ -191,7 +165,7 @@ def add_interest(
         "message": "Interest saved successfully",
         "student_id": student_id,
         "interest": new_interest.interest,
-        "status": new_interest.status
+        "status": new_interest.status,
     }
 
 
@@ -199,13 +173,14 @@ def add_interest(
 # START INTEREST+ SESSION
 # ============================================================
 
+
 @router.post("/{student_id}/interest-session/start")
 def start_interest_session(
     student_id: str,
     interest_data: InterestRequest,
     reset: bool = False,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_student)
+    current_user: dict = Depends(require_student),
 ):
 
     verify_student_access(student_id, current_user)
@@ -214,19 +189,10 @@ def start_interest_session(
     # 1. Check whether student exists
     # --------------------------------------------------------
 
-    student = (
-        db.query(Student)
-        .filter(
-            Student.student_id == student_id
-        )
-        .first()
-    )
+    student = db.query(Student).filter(Student.student_id == student_id).first()
 
     if not student:
-        raise HTTPException(
-            status_code=404,
-            detail="Student not found"
-        )
+        raise HTTPException(status_code=404, detail="Student not found")
 
     # --------------------------------------------------------
     # 2. Reset previous answers if requested
@@ -235,7 +201,7 @@ def start_interest_session(
     if reset:
         db.query(QuizAnswer).filter(
             QuizAnswer.student_id == student_id,
-            QuizAnswer.interest == interest_data.interest
+            QuizAnswer.interest == interest_data.interest,
         ).delete()
 
         db.commit()
@@ -248,16 +214,14 @@ def start_interest_session(
         db.query(StudentInterest)
         .filter(
             StudentInterest.student_id == student_id,
-            StudentInterest.interest == interest_data.interest
+            StudentInterest.interest == interest_data.interest,
         )
         .first()
     )
 
     if not existing_interest:
         new_interest = StudentInterest(
-            student_id=student_id,
-            interest=interest_data.interest,
-            status="active"
+            student_id=student_id, interest=interest_data.interest, status="active"
         )
 
         db.add(new_interest)
@@ -271,11 +235,9 @@ def start_interest_session(
         db.query(QuizAnswer)
         .filter(
             QuizAnswer.student_id == student_id,
-            QuizAnswer.interest == interest_data.interest
+            QuizAnswer.interest == interest_data.interest,
         )
-        .order_by(
-            QuizAnswer.question_order
-        )
+        .order_by(QuizAnswer.question_order)
         .all()
     )
 
@@ -291,11 +253,13 @@ def start_interest_session(
         except (json.JSONDecodeError, TypeError):
             parsed_answer = answer.answer
 
-        conversation.append({
-            "question_id": answer.question_id,
-            "question": answer.question,
-            "answer": parsed_answer
-        })
+        conversation.append(
+            {
+                "question_id": answer.question_id,
+                "question": answer.question,
+                "answer": parsed_answer,
+            }
+        )
 
     # --------------------------------------------------------
     # 6. Ask AI for the next question
@@ -305,7 +269,7 @@ def start_interest_session(
         interest=interest_data.interest,
         conversation=conversation,
         existing_skills=[],
-        previous_interests=[]
+        previous_interests=[],
     )
 
     # --------------------------------------------------------
@@ -317,7 +281,7 @@ def start_interest_session(
             "completed": True,
             "question_number": len(conversation),
             "total_questions": 5,
-            "next_question": None
+            "next_question": None,
         }
 
     # --------------------------------------------------------
@@ -330,7 +294,7 @@ def start_interest_session(
         "completed": False,
         "question_number": len(conversation) + 1,
         "total_questions": 5,
-        "next_question": question.model_dump()
+        "next_question": question.model_dump(),
     }
 
 
@@ -338,12 +302,13 @@ def start_interest_session(
 # SUBMIT ANSWER + GENERATE NEXT QUESTION
 # ============================================================
 
+
 @router.post("/{student_id}/interest-session/answer")
 def submit_interest_answer(
     student_id: str,
     answer_data: AnswerRequest,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_student)
+    current_user: dict = Depends(require_student),
 ):
 
     verify_student_access(student_id, current_user)
@@ -352,19 +317,10 @@ def submit_interest_answer(
     # 1. Check student
     # --------------------------------------------------------
 
-    student = (
-        db.query(Student)
-        .filter(
-            Student.student_id == student_id
-        )
-        .first()
-    )
+    student = db.query(Student).filter(Student.student_id == student_id).first()
 
     if not student:
-        raise HTTPException(
-            status_code=404,
-            detail="Student not found"
-        )
+        raise HTTPException(status_code=404, detail="Student not found")
 
     # --------------------------------------------------------
     # 2. Save answer
@@ -376,7 +332,7 @@ def submit_interest_answer(
         question_id=answer_data.question_id,
         question=answer_data.question,
         answer=json.dumps(answer_data.answer),
-        question_order=answer_data.question_order
+        question_order=answer_data.question_order,
     )
 
     db.add(new_answer)
@@ -391,11 +347,9 @@ def submit_interest_answer(
         db.query(QuizAnswer)
         .filter(
             QuizAnswer.student_id == student_id,
-            QuizAnswer.interest == answer_data.interest
+            QuizAnswer.interest == answer_data.interest,
         )
-        .order_by(
-            QuizAnswer.question_order
-        )
+        .order_by(QuizAnswer.question_order)
         .all()
     )
 
@@ -414,11 +368,13 @@ def submit_interest_answer(
         except (json.JSONDecodeError, TypeError):
             parsed_answer = answer.answer
 
-        conversation.append({
-            "question_id": answer.question_id,
-            "question": answer.question,
-            "answer": parsed_answer
-        })
+        conversation.append(
+            {
+                "question_id": answer.question_id,
+                "question": answer.question,
+                "answer": parsed_answer,
+            }
+        )
 
     # ========================================================
     # 5. EXACTLY 5 QUESTIONS → FINAL ANALYSIS
@@ -430,7 +386,7 @@ def submit_interest_answer(
             interest=answer_data.interest,
             answers=conversation,
             existing_skills=[],
-            previous_interests=[]
+            previous_interests=[],
         )
 
         # ----------------------------------------------------
@@ -444,28 +400,12 @@ def submit_interest_answer(
             confidence_score=analysis_result.confidence_score,
             experience_score=analysis_result.experience_score,
             capability_score=analysis_result.capability_score,
-
-            strengths=json.dumps(
-                analysis_result.strengths
-            ),
-
-            skill_gaps=json.dumps(
-                analysis_result.skill_gaps
-            ),
-
-            potential_directions=json.dumps(
-                analysis_result.potential_directions
-            ),
-
-            next_steps=json.dumps(
-                analysis_result.next_steps
-            ),
-
-            evidence=json.dumps(
-                analysis_result.evidence
-            ),
-
-            summary=analysis_result.summary
+            strengths=json.dumps(analysis_result.strengths),
+            skill_gaps=json.dumps(analysis_result.skill_gaps),
+            potential_directions=json.dumps(analysis_result.potential_directions),
+            next_steps=json.dumps(analysis_result.next_steps),
+            evidence=json.dumps(analysis_result.evidence),
+            summary=analysis_result.summary,
         )
 
         db.add(analysis_record)
@@ -482,7 +422,7 @@ def submit_interest_answer(
             "total_questions": 5,
             "next_question": None,
             "message": "Interest+ assessment completed.",
-            "analysis": analysis_result.model_dump()
+            "analysis": analysis_result.model_dump(),
         }
 
     # ========================================================
@@ -493,7 +433,7 @@ def submit_interest_answer(
         interest=answer_data.interest,
         conversation=conversation,
         existing_skills=[],
-        previous_interests=[]
+        previous_interests=[],
     )
 
     # --------------------------------------------------------
@@ -508,7 +448,7 @@ def submit_interest_answer(
                 f"AI attempted to finish the assessment after "
                 f"{question_count} questions. "
                 f"The assessment requires 5 questions."
-            )
+            ),
         )
 
     # --------------------------------------------------------
@@ -522,13 +462,14 @@ def submit_interest_answer(
         "question_number": question_count + 1,
         "total_questions": 5,
         "next_question": next_question.model_dump(),
-        "result": None
+        "result": None,
     }
 
 
 # ============================================================
 # JSON PARSING HELPER
 # ============================================================
+
 
 def parse_json_safely(val):
     if not val:
@@ -544,11 +485,12 @@ def parse_json_safely(val):
 # GET INTEREST ANALYSIS
 # ============================================================
 
+
 @router.get("/{student_id}/interest-analysis")
 def get_interest_analysis(
     student_id: str,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_student)
+    current_user: dict = Depends(require_student),
 ):
 
     verify_student_access(student_id, current_user)
@@ -557,19 +499,10 @@ def get_interest_analysis(
     # 1. Check whether student exists
     # --------------------------------------------------------
 
-    student = (
-        db.query(Student)
-        .filter(
-            Student.student_id == student_id
-        )
-        .first()
-    )
+    student = db.query(Student).filter(Student.student_id == student_id).first()
 
     if not student:
-        raise HTTPException(
-            status_code=404,
-            detail="Student not found"
-        )
+        raise HTTPException(status_code=404, detail="Student not found")
 
     # --------------------------------------------------------
     # 2. Get all interest analyses for this student
@@ -577,12 +510,8 @@ def get_interest_analysis(
 
     analyses = (
         db.query(InterestAnalysis)
-        .filter(
-            InterestAnalysis.student_id == student_id
-        )
-        .order_by(
-            InterestAnalysis.id.desc()
-        )
+        .filter(InterestAnalysis.student_id == student_id)
+        .order_by(InterestAnalysis.id.desc())
         .all()
     )
 
@@ -591,11 +520,7 @@ def get_interest_analysis(
     # --------------------------------------------------------
 
     if not analyses:
-        return {
-            "student_id": student_id,
-            "has_analysis": False,
-            "analyses": []
-        }
+        return {"student_id": student_id, "has_analysis": False, "analyses": []}
 
     return {
         "student_id": student_id,
@@ -613,17 +538,13 @@ def get_interest_analysis(
                 "potential_directions": parse_json_safely(
                     analysis.potential_directions
                 ),
-                "next_steps": parse_json_safely(
-                    analysis.next_steps
-                ),
-                "evidence": parse_json_safely(
-                    analysis.evidence
-                ),
+                "next_steps": parse_json_safely(analysis.next_steps),
+                "evidence": parse_json_safely(analysis.evidence),
                 "summary": analysis.summary,
-                "analysis": analysis.analysis or analysis.summary
+                "analysis": analysis.analysis or analysis.summary,
             }
             for analysis in analyses
-        ]
+        ],
     }
 
 
@@ -631,10 +552,8 @@ def get_interest_analysis(
 # STUDENT CONTEXT HELPER
 # ============================================================
 
-def _get_student_context(
-    student_id: str,
-    db: Session
-):
+
+def _get_student_context(student_id: str, db: Session):
     """
     Helper to fetch student's active interest analysis,
     previous interests, and inferred existing skills
@@ -643,34 +562,21 @@ def _get_student_context(
 
     latest_analysis = (
         db.query(InterestAnalysis)
-        .filter(
-            InterestAnalysis.student_id == student_id
-        )
-        .order_by(
-            InterestAnalysis.id.desc()
-        )
+        .filter(InterestAnalysis.student_id == student_id)
+        .order_by(InterestAnalysis.id.desc())
         .first()
     )
 
     previous_interest_records = (
-        db.query(StudentInterest)
-        .filter(
-            StudentInterest.student_id == student_id
-        )
-        .all()
+        db.query(StudentInterest).filter(StudentInterest.student_id == student_id).all()
     )
 
-    previous_interests = [
-        i.interest
-        for i in previous_interest_records
-    ]
+    previous_interests = [i.interest for i in previous_interest_records]
 
     existing_skills = []
 
     if latest_analysis:
-        strengths = parse_json_safely(
-            latest_analysis.strengths
-        ) or []
+        strengths = parse_json_safely(latest_analysis.strengths) or []
 
         if isinstance(strengths, list):
             existing_skills.extend(strengths)
@@ -685,37 +591,20 @@ def _get_student_context(
             "confidence_score": latest_analysis.confidence_score,
             "experience_score": latest_analysis.experience_score,
             "capability_score": latest_analysis.capability_score,
-
-            "strengths": parse_json_safely(
-                latest_analysis.strengths
-            ) or [],
-
-            "skill_gaps": parse_json_safely(
-                latest_analysis.skill_gaps
-            ) or [],
-
+            "strengths": parse_json_safely(latest_analysis.strengths) or [],
+            "skill_gaps": parse_json_safely(latest_analysis.skill_gaps) or [],
             "potential_directions": parse_json_safely(
                 latest_analysis.potential_directions
-            ) or [],
-
-            "next_steps": parse_json_safely(
-                latest_analysis.next_steps
-            ) or [],
-
-            "evidence": parse_json_safely(
-                latest_analysis.evidence
-            ) or [],
-
+            )
+            or [],
+            "next_steps": parse_json_safely(latest_analysis.next_steps) or [],
+            "evidence": parse_json_safely(latest_analysis.evidence) or [],
             "summary": latest_analysis.summary or "",
         }
 
         # Include verified profile info from student record
         student_record = (
-            db.query(Student)
-            .filter(
-                Student.student_id == student_id
-            )
-            .first()
+            db.query(Student).filter(Student.student_id == student_id).first()
         )
 
         if student_record:
@@ -724,54 +613,33 @@ def _get_student_context(
                 "name": student_record.name,
                 "attendance": student_record.attendance,
                 "previous_sem_cgpa": student_record.previous_sem_cgpa,
-                "extracurricular_count": (
-                    student_record.extracurricular_count
-                ),
+                "extracurricular_count": (student_record.extracurricular_count),
             }
 
-    return (
-        latest_analysis,
-        analysis_dict,
-        existing_skills,
-        previous_interests
-    )
+    return (latest_analysis, analysis_dict, existing_skills, previous_interests)
 
 
 # ============================================================
 # DISCOVER CAREER DIRECTIONS
 # ============================================================
 
+
 @router.get("/{student_id}/career-directions")
 def get_career_directions(
     student_id: str,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_student)
+    current_user: dict = Depends(require_student),
 ):
 
     verify_student_access(student_id, current_user)
 
-    student = (
-        db.query(Student)
-        .filter(
-            Student.student_id == student_id
-        )
-        .first()
-    )
+    student = db.query(Student).filter(Student.student_id == student_id).first()
 
     if not student:
-        raise HTTPException(
-            status_code=404,
-            detail="Student not found"
-        )
+        raise HTTPException(status_code=404, detail="Student not found")
 
-    (
-        latest_analysis,
-        analysis_dict,
-        existing_skills,
-        previous_interests
-    ) = _get_student_context(
-        student_id,
-        db
+    latest_analysis, analysis_dict, existing_skills, previous_interests = (
+        _get_student_context(student_id, db)
     )
 
     if not latest_analysis:
@@ -780,26 +648,22 @@ def get_career_directions(
             "student_id": student_id,
             "directions": [],
             "message": (
-                "Complete the Interest+ quiz first "
-                "to discover career directions."
-            )
+                "Complete the Interest+ quiz first " "to discover career directions."
+            ),
         }
 
     # Discover directions using the AI pipeline
     result = discover_career_directions(
         existing_skills=existing_skills,
         previous_interests=previous_interests,
-        interest_analysis=analysis_dict
+        interest_analysis=analysis_dict,
     )
 
     return {
         "has_analysis": True,
         "student_id": student_id,
         "interest": latest_analysis.interest,
-        "directions": [
-            direction.model_dump()
-            for direction in result.directions
-        ]
+        "directions": [direction.model_dump() for direction in result.directions],
     }
 
 
@@ -807,39 +671,25 @@ def get_career_directions(
 # GET SKILL GAP ANALYSIS
 # ============================================================
 
+
 @router.get("/{student_id}/skill-gap")
 def get_skill_gap(
     student_id: str,
     direction: str | None = None,
     force_refresh: bool = False,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_student)
+    current_user: dict = Depends(require_student),
 ):
 
     verify_student_access(student_id, current_user)
 
-    student = (
-        db.query(Student)
-        .filter(
-            Student.student_id == student_id
-        )
-        .first()
-    )
+    student = db.query(Student).filter(Student.student_id == student_id).first()
 
     if not student:
-        raise HTTPException(
-            status_code=404,
-            detail="Student not found"
-        )
+        raise HTTPException(status_code=404, detail="Student not found")
 
-    (
-        latest_analysis,
-        analysis_dict,
-        existing_skills,
-        previous_interests
-    ) = _get_student_context(
-        student_id,
-        db
+    latest_analysis, analysis_dict, existing_skills, previous_interests = (
+        _get_student_context(student_id, db)
     )
 
     if not latest_analysis:
@@ -850,7 +700,7 @@ def get_skill_gap(
                 "Interest analysis is not available yet. "
                 "Please complete the Interest+ discovery quiz first."
             ),
-            "data": None
+            "data": None,
         }
 
     # --------------------------------------------------------
@@ -861,17 +711,9 @@ def get_skill_gap(
 
     if not target_direction:
 
-        pot_dirs = (
-            analysis_dict.get(
-                "potential_directions"
-            ) or []
-        )
+        pot_dirs = analysis_dict.get("potential_directions") or []
 
-        if (
-            pot_dirs
-            and isinstance(pot_dirs, list)
-            and len(pot_dirs) > 0
-        ):
+        if pot_dirs and isinstance(pot_dirs, list) and len(pot_dirs) > 0:
 
             target_direction = (
                 pot_dirs[0]
@@ -884,13 +726,11 @@ def get_skill_gap(
             dir_res = discover_career_directions(
                 existing_skills=existing_skills,
                 previous_interests=previous_interests,
-                interest_analysis=analysis_dict
+                interest_analysis=analysis_dict,
             )
 
             if dir_res.directions:
-                target_direction = (
-                    dir_res.directions[0].name
-                )
+                target_direction = dir_res.directions[0].name
             else:
                 target_direction = latest_analysis.interest
 
@@ -902,7 +742,7 @@ def get_skill_gap(
         db.query(CareerPivotAnalysis)
         .filter(
             CareerPivotAnalysis.student_id == student_id,
-            CareerPivotAnalysis.direction == target_direction
+            CareerPivotAnalysis.direction == target_direction,
         )
         .first()
     )
@@ -914,34 +754,13 @@ def get_skill_gap(
             "student_id": student_id,
             "interest": cached.interest,
             "direction": cached.direction,
-
-            "required_skills": parse_json_safely(
-                cached.required_skills
-            ) or [],
-
-            "skill_assessments": parse_json_safely(
-                cached.skill_assessments
-            ) or [],
-
-            "transferable_skills": parse_json_safely(
-                cached.transferable_skills
-            ) or [],
-
-            "skill_gaps": parse_json_safely(
-                cached.skill_gaps
-            ) or [],
-
-            "transition_difficulty": (
-                cached.transition_difficulty
-            ),
-
-            "transition_reason": (
-                cached.transition_reason
-            ),
-
-            "roadmap": parse_json_safely(
-                cached.roadmap
-            ) or []
+            "required_skills": parse_json_safely(cached.required_skills) or [],
+            "skill_assessments": parse_json_safely(cached.skill_assessments) or [],
+            "transferable_skills": parse_json_safely(cached.transferable_skills) or [],
+            "skill_gaps": parse_json_safely(cached.skill_gaps) or [],
+            "transition_difficulty": (cached.transition_difficulty),
+            "transition_reason": (cached.transition_reason),
+            "roadmap": parse_json_safely(cached.roadmap) or [],
         }
 
     # --------------------------------------------------------
@@ -952,7 +771,7 @@ def get_skill_gap(
         selected_direction=target_direction,
         existing_skills=existing_skills,
         previous_interests=previous_interests,
-        interest_analysis=analysis_dict
+        interest_analysis=analysis_dict,
     )
 
     # --------------------------------------------------------
@@ -964,53 +783,30 @@ def get_skill_gap(
         cached = CareerPivotAnalysis(
             student_id=student_id,
             interest=latest_analysis.interest,
-            direction=target_direction
+            direction=target_direction,
         )
 
         db.add(cached)
 
     cached.required_skills = json.dumps(
-        [
-            s.model_dump()
-            for s in analysis_result.required_skills
-        ]
+        [s.model_dump() for s in analysis_result.required_skills]
     )
 
     cached.skill_assessments = json.dumps(
-        [
-            a.model_dump()
-            for a in analysis_result.skill_assessments
-        ]
+        [a.model_dump() for a in analysis_result.skill_assessments]
     )
 
     cached.transferable_skills = json.dumps(
-        [
-            t.model_dump()
-            for t in analysis_result.transferable_skills
-        ]
+        [t.model_dump() for t in analysis_result.transferable_skills]
     )
 
-    cached.skill_gaps = json.dumps(
-        [
-            g.model_dump()
-            for g in analysis_result.skill_gaps
-        ]
-    )
+    cached.skill_gaps = json.dumps([g.model_dump() for g in analysis_result.skill_gaps])
 
-    cached.transition_difficulty = (
-        analysis_result.transition_difficulty
-    )
+    cached.transition_difficulty = analysis_result.transition_difficulty
 
-    cached.transition_reason = (
-        analysis_result.transition_reason
-    )
+    cached.transition_reason = analysis_result.transition_reason
 
-    cached.roadmap = json.dumps(
-        [
-            r.model_dump()
-            for r in analysis_result.roadmap
-        ]
-    )
+    cached.roadmap = json.dumps([r.model_dump() for r in analysis_result.roadmap])
 
     db.commit()
     db.refresh(cached)
@@ -1020,34 +816,13 @@ def get_skill_gap(
         "student_id": student_id,
         "interest": cached.interest,
         "direction": cached.direction,
-
-        "required_skills": parse_json_safely(
-            cached.required_skills
-        ) or [],
-
-        "skill_assessments": parse_json_safely(
-            cached.skill_assessments
-        ) or [],
-
-        "transferable_skills": parse_json_safely(
-            cached.transferable_skills
-        ) or [],
-
-        "skill_gaps": parse_json_safely(
-            cached.skill_gaps
-        ) or [],
-
-        "transition_difficulty": (
-            cached.transition_difficulty
-        ),
-
-        "transition_reason": (
-            cached.transition_reason
-        ),
-
-        "roadmap": parse_json_safely(
-            cached.roadmap
-        ) or []
+        "required_skills": parse_json_safely(cached.required_skills) or [],
+        "skill_assessments": parse_json_safely(cached.skill_assessments) or [],
+        "transferable_skills": parse_json_safely(cached.transferable_skills) or [],
+        "skill_gaps": parse_json_safely(cached.skill_gaps) or [],
+        "transition_difficulty": (cached.transition_difficulty),
+        "transition_reason": (cached.transition_reason),
+        "roadmap": parse_json_safely(cached.roadmap) or [],
     }
 
 
@@ -1055,13 +830,14 @@ def get_skill_gap(
 # GET ROADMAP
 # ============================================================
 
+
 @router.get("/{student_id}/roadmap")
 def get_roadmap(
     student_id: str,
     direction: str | None = None,
     force_refresh: bool = False,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_student)
+    current_user: dict = Depends(require_student),
 ):
 
     verify_student_access(student_id, current_user)
@@ -1074,7 +850,7 @@ def get_roadmap(
         direction=direction,
         force_refresh=force_refresh,
         db=db,
-        current_user=current_user
+        current_user=current_user,
     )
 
     if not gap_data.get("has_analysis"):
@@ -1082,10 +858,9 @@ def get_roadmap(
             "has_analysis": False,
             "student_id": student_id,
             "detail": gap_data.get(
-                "detail",
-                "Roadmap unavailable. Complete Interest+ first."
+                "detail", "Roadmap unavailable. Complete Interest+ first."
             ),
-            "roadmap": []
+            "roadmap": [],
         }
 
     return {
@@ -1093,13 +868,9 @@ def get_roadmap(
         "student_id": student_id,
         "interest": gap_data.get("interest"),
         "direction": gap_data.get("direction"),
-        "transition_difficulty": gap_data.get(
-            "transition_difficulty"
-        ),
-        "transition_reason": gap_data.get(
-            "transition_reason"
-        ),
-        "roadmap": gap_data.get("roadmap") or []
+        "transition_difficulty": gap_data.get("transition_difficulty"),
+        "transition_reason": gap_data.get("transition_reason"),
+        "roadmap": gap_data.get("roadmap") or [],
     }
 
 
@@ -1107,12 +878,13 @@ def get_roadmap(
 # ANALYZE SPECIFIC CAREER DIRECTION
 # ============================================================
 
+
 @router.post("/{student_id}/career-pivot/analyze")
 def trigger_career_pivot_analysis(
     student_id: str,
     body: CareerDirectionAnalyzeRequest,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_student)
+    current_user: dict = Depends(require_student),
 ):
 
     verify_student_access(student_id, current_user)
@@ -1122,5 +894,30 @@ def trigger_career_pivot_analysis(
         direction=body.direction,
         force_refresh=body.force_refresh,
         db=db,
-        current_user=current_user
+        current_user=current_user,
     )
+
+
+def refresh_notice_profile(student: Student, db: Session):
+    interests = (
+        db.query(StudentInterest)
+        .filter(
+            StudentInterest.student_id == student.student_id,
+            StudentInterest.status == "active",
+        )
+        .all()
+    )
+
+    preference_text = ", ".join(
+        interest.interest for interest in interests if interest.interest
+    )
+
+    student.preferences = preference_text
+
+    if preference_text:
+        student.preference_embedding = create_preference_embedding(preference_text)
+    else:
+        student.preference_embedding = None
+
+    db.commit()
+    db.refresh(student)

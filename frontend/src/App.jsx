@@ -15,13 +15,12 @@ import SkillGap from "./pages/Student/SkillGap";
 import StudentRoadmap from "./pages/Student/StudentRoadmap";
 
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
-
+import NoticeUpload from "./pages/teachers-dash/NoticeUpload";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-
         {/* ==================================================
             PUBLIC ROUTES
         ================================================== */}
@@ -29,7 +28,6 @@ function App() {
         <Route path="/" element={<Landing />} />
 
         <Route path="/login" element={<Login />} />
-
 
         {/* ==================================================
             TEACHER ROUTES
@@ -52,8 +50,15 @@ function App() {
             </ProtectedRoute>
           }
         />
-
-
+        
+        <Route
+          path="/teacher/notices"
+          element={
+            <ProtectedRoute allowedRole="teacher">
+              <NoticeUpload />
+            </ProtectedRoute>
+          }
+        />
         {/* ==================================================
             STUDENT ROUTES
         ================================================== */}
@@ -120,7 +125,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-      
       </Routes>
     </BrowserRouter>
   );
