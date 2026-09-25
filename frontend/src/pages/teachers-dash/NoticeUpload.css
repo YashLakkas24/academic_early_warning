@@ -245,6 +245,62 @@
   cursor: pointer;
 }
 
+.notice-batch-files {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.notice-batch-file {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-panel-soft);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.notice-batch-file > svg {
+  flex-shrink: 0;
+  color: var(--accent-blue);
+}
+
+.notice-batch-file > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.notice-batch-file strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notice-batch-file span {
+  display: block;
+  margin-top: 3px;
+  color: var(--text-tertiary);
+  font-size: 11px;
+}
+
+.notice-batch-file > button {
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.notice-batch-file > button:hover {
+  color: var(--text-primary);
+}
+
 @media (max-width: 800px) {
   .notice-upload-hero {
     padding: 28px;

@@ -13,7 +13,11 @@ import {
 import TeacherHeader from "../../components/teacher/TeacherHeader";
 import { getTeacherProfile } from "../../services/teacherService";
 import { logout } from "../../services/authService";
-import { uploadNotice, uploadTextNotice } from "../../api/notifications";
+import {
+  uploadNotice,
+  uploadTextNotice,
+  uploadNoticesBatch,
+} from "../../api/notifications";
 
 import "./NoticeUpload.css";
 
@@ -23,7 +27,10 @@ export default function NoticeUpload() {
 
   const [profile, setProfile] = useState(null);
   const [activeMode, setActiveMode] = useState("file");
+
   const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+
   const [noticeText, setNoticeText] = useState("");
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
@@ -37,9 +44,9 @@ export default function NoticeUpload() {
   }, []);
 
   const handleFileChange = (event) => {
-    const file = event.target.files?.[0];
+    const files = Array.from(event.target.files || []);
 
-    if (!file) return;
+    if (!files.length) return;
 
     const allowedTypes = [
       "application/pdf",
@@ -48,14 +55,30 @@ export default function NoticeUpload() {
       "image/webp",
     ];
 
-    if (!allowedTypes.includes(file.type)) {
+    const invalidFile = files.find((file) => !allowedTypes.includes(file.type));
+
+    if (invalidFile) {
       setStatus("error");
-      setMessage("Please select a PDF, JPG, PNG or WEBP file.");
-      setSelectedFile(null);
+      setMessage(
+        `${invalidFile.name} is not a supported file. Use PDF, JPG, PNG or WEBP.`,
+      );
       return;
     }
 
-    setSelectedFile(file);
+    if (activeMode === "batch") {
+      if (files.length > 20) {
+        setStatus("error");
+        setMessage("You can upload a maximum of 20 notices at once.");
+        return;
+      }
+
+      setSelectedFiles(files);
+      setSelectedFile(null);
+    } else {
+      setSelectedFile(files[0]);
+      setSelectedFiles([]);
+    }
+
     setStatus("idle");
     setMessage("");
   };
@@ -77,6 +100,33 @@ export default function NoticeUpload() {
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
         }
+
+        setStatus("success");
+        setMessage(
+          "Notice accepted. AI processing and student routing have started.",
+        );
+      } else if (activeMode === "batch") {
+        if (!selectedFiles.length) {
+          throw new Error("Please select at least one notice file.");
+        }
+
+        const result = await uploadNoticesBatch(selectedFiles);
+
+        setSelectedFiles([]);
+
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+
+        setStatus(result.failed > 0 ? "error" : "success");
+
+        setMessage(
+          `${result.accepted} notice${
+            result.accepted === 1 ? "" : "s"
+          } accepted for processing${
+            result.failed > 0 ? `, ${result.failed} failed.` : "."
+          }`,
+        );
       } else {
         if (!noticeText.trim()) {
           throw new Error("Please enter the notice text.");
@@ -134,8 +184,13 @@ export default function NoticeUpload() {
               className={activeMode === "file" ? "active" : ""}
               onClick={() => {
                 setActiveMode("file");
+                setSelectedFiles([]);
                 setStatus("idle");
                 setMessage("");
+
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = "";
+                }
               }}
             >
               <Upload size={17} />
@@ -144,11 +199,35 @@ export default function NoticeUpload() {
 
             <button
               type="button"
+              className={activeMode === "batch" ? "active" : ""}
+              onClick={() => {
+                setActiveMode("batch");
+                setSelectedFile(null);
+                setStatus("idle");
+                setMessage("");
+
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = "";
+                }
+              }}
+            >
+              <Upload size={17} />
+              Batch Upload
+            </button>
+
+            <button
+              type="button"
               className={activeMode === "text" ? "active" : ""}
               onClick={() => {
                 setActiveMode("text");
+                setSelectedFile(null);
+                setSelectedFiles([]);
                 setStatus("idle");
                 setMessage("");
+
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = "";
+                }
               }}
             >
               <FileText size={17} />
@@ -199,6 +278,69 @@ export default function NoticeUpload() {
                   </>
                 )}
               </button>
+            </div>
+          ) : activeMode === "batch" ? (
+            <div className="notice-file-section">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,.webp"
+                multiple
+                onChange={handleFileChange}
+                hidden
+              />
+
+              <button
+                type="button"
+                className="notice-dropzone"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload size={42} />
+
+                <strong>
+                  {selectedFiles.length > 0
+                    ? `${selectedFiles.length} notices selected`
+                    : "Choose multiple notice files"}
+                </strong>
+
+                <span>PDF, JPG, PNG or WEBP</span>
+
+                <small>Maximum 20 notices at once</small>
+              </button>
+
+              {selectedFiles.length > 0 && (
+                <div className="notice-batch-files">
+                  {selectedFiles.map((file, index) => (
+                    <div
+                      className="notice-batch-file"
+                      key={`${file.name}-${index}`}
+                    >
+                      {file.type === "application/pdf" ? (
+                        <FileText size={17} />
+                      ) : (
+                        <ImageIcon size={17} />
+                      )}
+
+                      <div>
+                        <strong>{file.name}</strong>
+
+                        <span>{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedFiles((currentFiles) =>
+                            currentFiles.filter((_, i) => i !== index),
+                          );
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             <div className="notice-text-section">

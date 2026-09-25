@@ -72,6 +72,80 @@ def process_notice_in_background(
         db.close()
 
 
+ALLOWED_IMAGE_TYPES = {
+    "image/jpeg",
+    "image/png",
+    "image/jpg",
+    "image/webp",
+}
+
+MAX_BATCH_FILES = 20
+
+
+def extract_notice_text(
+    file_bytes: bytes,
+    filename: str,
+    content_type: str | None,
+) -> str:
+    extension = Path(filename).suffix.lower()
+
+    # --------------------------------------------------
+    # PDF
+    # --------------------------------------------------
+
+    if extension == ".pdf" or content_type == "application/pdf":
+        reader = PdfReader(BytesIO(file_bytes))
+
+        extracted_text = ""
+
+        for page in reader.pages:
+            page_text = page.extract_text()
+
+            if page_text:
+                extracted_text += page_text + "\n"
+
+        # OCR fallback
+        if not extracted_text.strip():
+            from pdf2image import convert_from_bytes
+
+            images = convert_from_bytes(
+                file_bytes,
+                poppler_path=POPPLER_PATH or None,
+            )
+
+            ocr_text = []
+
+            for image in images:
+                text = pytesseract.image_to_string(image)
+
+                if text.strip():
+                    ocr_text.append(text)
+
+            extracted_text = "\n".join(ocr_text)
+
+        return extracted_text.strip()
+
+    # --------------------------------------------------
+    # IMAGE
+    # --------------------------------------------------
+
+    if content_type in ALLOWED_IMAGE_TYPES or extension in {
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".webp",
+    }:
+        image = Image.open(BytesIO(file_bytes))
+
+        extracted_text = pytesseract.image_to_string(image)
+
+        return extracted_text.strip()
+
+    raise ValueError(
+        "Unsupported file type. Only PDF, JPG, JPEG, PNG and WEBP are supported."
+    )
+
+
 # ============================================================
 # TEXT NOTICE
 # ============================================================
@@ -281,6 +355,105 @@ def get_all_notices(
             }
             for notice in notices
         ],
+    }
+
+
+# ============================================================
+# BATCH NOTICE UPLOAD
+# ============================================================
+
+
+@router.post("/api/admin/notices/batch")
+async def upload_batch_notices(
+    background_tasks: BackgroundTasks,
+    files: list[UploadFile] = File(...),
+    current_user: dict = Depends(require_teacher),
+):
+    if not files:
+        raise HTTPException(
+            status_code=400,
+            detail="Please select at least one notice file.",
+        )
+
+    if len(files) > MAX_BATCH_FILES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"You can upload a maximum of {MAX_BATCH_FILES} notices at once.",
+        )
+
+    results = []
+
+    for file in files:
+        filename = file.filename or "unnamed-file"
+
+        try:
+            file_bytes = await file.read()
+
+            if not file_bytes:
+                raise ValueError("File is empty.")
+
+            extracted_text = extract_notice_text(
+                file_bytes=file_bytes,
+                filename=filename,
+                content_type=file.content_type,
+            )
+
+            if not extracted_text:
+                raise ValueError("Could not extract readable text from the notice.")
+
+            # Save original document
+            extension = Path(filename).suffix.lower()
+
+            if extension not in {
+                ".pdf",
+                ".jpg",
+                ".jpeg",
+                ".png",
+                ".webp",
+            }:
+                raise ValueError("Unsupported file extension.")
+
+            saved_filename = f"{uuid.uuid4()}{extension}"
+            file_path = UPLOAD_DIR / saved_filename
+
+            with open(file_path, "wb") as f:
+                f.write(file_bytes)
+
+            file_url = f"/uploads/notices/{saved_filename}"
+
+            # Each file becomes its own notice
+            background_tasks.add_task(
+                process_notice_in_background,
+                extracted_text,
+                file_url,
+            )
+
+            results.append(
+                {
+                    "filename": filename,
+                    "status": "accepted",
+                }
+            )
+
+        except Exception as e:
+            results.append(
+                {
+                    "filename": filename,
+                    "status": "failed",
+                    "error": str(e),
+                }
+            )
+
+    accepted = sum(1 for result in results if result["status"] == "accepted")
+
+    failed = len(results) - accepted
+
+    return {
+        "message": "Batch notice upload completed.",
+        "total": len(results),
+        "accepted": accepted,
+        "failed": failed,
+        "results": results,
     }
 
 

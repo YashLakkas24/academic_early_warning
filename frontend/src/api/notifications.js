@@ -183,3 +183,29 @@ export async function getAllStudentNotices(studentId) {
 
   return response.json();
 }
+
+// ============================================================
+// BATCH NOTICE UPLOAD
+// ============================================================
+
+export async function uploadNoticesBatch(files) {
+  const formData = new FormData();
+
+  files.forEach((file) => {
+    formData.append("files", file);
+  });
+
+  const response = await fetch(`${API_BASE}/api/admin/notices/batch`, {
+    method: "POST",
+    headers: await getAuthHeaders(),
+    body: formData,
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.detail || "Batch notice upload failed");
+  }
+
+  return data;
+}
