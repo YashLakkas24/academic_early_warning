@@ -6,6 +6,7 @@ import {
 } from "../../services/studentService";
 import {
   getStudentNotifications,
+  getAllStudentNotices,
   markNotificationRead,
 } from "../../api/notifications";
 
@@ -32,6 +33,8 @@ function StudentDashboard() {
   const [interestAnalysis, setInterestAnalysis] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [notificationsLoading, setNotificationsLoading] = useState(true);
+  const [allNotices, setAllNotices] = useState([]);
+  const [noticeTab, setNoticeTab] = useState("relevant");
 
   const savedUser = (() => {
     try {
@@ -87,6 +90,19 @@ function StudentDashboard() {
         }
       });
 
+    getAllStudentNotices(studentId)
+      .then((data) => {
+        if (isMounted) {
+          setAllNotices(data.notices || []);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load all notices:", error);
+
+        if (isMounted) {
+          setAllNotices([]);
+        }
+      });
     return () => {
       isMounted = false;
     };
@@ -164,7 +180,7 @@ function StudentDashboard() {
                     navigate("/student/interest");
                     return;
                   }
-                  
+
                   if (item.id === "preferences") {
                     navigate("/student/preferences");
                     return;
@@ -289,31 +305,166 @@ function StudentDashboard() {
           </div>
         </section>
         {/* =====================================================
-    PERSONALIZED NOTICES
+    STUDENT NOTICES
 ===================================================== */}
 
         <section className="dashboard-section">
           <div className="section-heading">
             <div>
-              <span className="section-label">PERSONALIZED FEED</span>
-              <h2>Important Notices</h2>
+              <span className="section-label">NOTICE CENTER</span>
+              <h2>
+                {noticeTab === "relevant" ? "Relevant Notices" : "All Notices"}
+              </h2>
             </div>
 
             <span>
-              {
-                notifications.filter(
-                  (notification) => notification.status === "UNREAD",
-                ).length
-              }{" "}
-              unread
+              {noticeTab === "relevant"
+                ? `${
+                    notifications.filter(
+                      (notification) => notification.status === "UNREAD",
+                    ).length
+                  } unread`
+                : `${allNotices.length} notices`}
             </span>
+          </div>
+
+          {/* Notice Tabs */}
+          <div className="notice-tabs">
+            <button
+              className={`notice-tab ${
+                noticeTab === "relevant" ? "active" : ""
+              }`}
+              onClick={() => setNoticeTab("relevant")}
+            >
+              Relevant Notices
+            </button>
+
+            <button
+              className={`notice-tab ${noticeTab === "all" ? "active" : ""}`}
+              onClick={() => setNoticeTab("all")}
+            >
+              All Notices
+            </button>
           </div>
 
           {notificationsLoading ? (
             <div className="feature-card">
-              <p>Loading your personalized notices...</p>
+              <p>Loading notices...</p>
             </div>
-          ) : notifications.length === 0 ? (
+          ) : noticeTab === "relevant" ? (
+            /* =====================================================
+       RELEVANT NOTICES
+    ===================================================== */
+
+            notifications.length === 0 ? (
+              <div className="feature-card">
+                <div className="feature-card-top">
+                  <div className="feature-icon">
+                    <CheckCircle2 size={21} />
+                  </div>
+                </div>
+
+                <h3>No relevant notices</h3>
+
+                <p>
+                  There are currently no college notices matching your
+                  preferences.
+                </p>
+              </div>
+            ) : (
+              <div className="dashboard-grid">
+                {notifications.map((notification) => (
+                  <div
+                    className="feature-card"
+                    key={notification.notification_id}
+                  >
+                    <div className="feature-card-top">
+                      <div className="feature-icon">
+                        <CheckCircle2 size={21} />
+                      </div>
+
+                      <span className="coming-soon">
+                        {notification.priority}
+                      </span>
+                    </div>
+
+                    <h3>{notification.title}</h3>
+
+                    <p>
+                      {notification.summary ||
+                        "No summary available for this notice."}
+                    </p>
+
+                    {notification.deadline && (
+                      <p>
+                        <strong>Deadline:</strong> {notification.deadline}
+                      </p>
+                    )}
+
+                    {notification.reason && (
+                      <p>
+                        <strong>Why you're seeing this:</strong>{" "}
+                        {notification.reason}
+                      </p>
+                    )}
+
+                    <div className="notice-actions">
+                      {notification.status === "UNREAD" && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              await markNotificationRead(
+                                studentId,
+                                notification.notification_id,
+                              );
+
+                              setNotifications((current) =>
+                                current.map((item) =>
+                                  item.notification_id ===
+                                  notification.notification_id
+                                    ? {
+                                        ...item,
+                                        status: "READ",
+                                      }
+                                    : item,
+                                ),
+                              );
+                            } catch (error) {
+                              console.error(
+                                "Failed to mark notification as read:",
+                                error,
+                              );
+                            }
+                          }}
+                        >
+                          Mark as Read
+                        </button>
+                      )}
+
+                      {notification.registration_link && (
+                        <button
+                          onClick={() =>
+                            window.open(
+                              notification.registration_link,
+                              "_blank",
+                              "noopener,noreferrer",
+                            )
+                          }
+                        >
+                          Open Notice
+                          <ChevronRight size={16} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          ) : /* =====================================================
+       ALL NOTICES
+    ===================================================== */
+
+          allNotices.length === 0 ? (
             <div className="feature-card">
               <div className="feature-card-top">
                 <div className="feature-icon">
@@ -321,86 +472,48 @@ function StudentDashboard() {
                 </div>
               </div>
 
-              <h3>No new notices</h3>
+              <h3>No notices available</h3>
 
-              <p>
-                There are currently no relevant college notices for your
-                profile.
-              </p>
+              <p>There are currently no notices published by the college.</p>
             </div>
           ) : (
             <div className="dashboard-grid">
-              {notifications.slice(0, 3).map((notification) => (
-                <div
-                  className="feature-card"
-                  key={notification.notification_id}
-                >
+              {allNotices.map((notice) => (
+                <div className="feature-card" key={notice.notice_id}>
                   <div className="feature-card-top">
                     <div className="feature-icon">
                       <CheckCircle2 size={21} />
                     </div>
 
-                    <span className="coming-soon">{notification.priority}</span>
+                    {notice.is_mandatory && (
+                      <span className="coming-soon">MANDATORY</span>
+                    )}
                   </div>
 
-                  <h3>{notification.title}</h3>
+                  <h3>{notice.title}</h3>
 
                   <p>
-                    {notification.summary ||
-                      "No summary available for this notice."}
+                    {notice.summary || "No summary available for this notice."}
                   </p>
 
-                  {notification.deadline && (
+                  {notice.category && (
                     <p>
-                      <strong>Deadline:</strong> {notification.deadline}
+                      <strong>Category:</strong> {notice.category}
                     </p>
                   )}
 
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "8px",
-                      marginTop: "12px",
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    {notification.status === "UNREAD" && (
-                      <button
-                        onClick={async () => {
-                          try {
-                            await markNotificationRead(
-                              studentId,
-                              notification.notification_id,
-                            );
+                  {notice.deadline && (
+                    <p>
+                      <strong>Deadline:</strong> {notice.deadline}
+                    </p>
+                  )}
 
-                            setNotifications((current) =>
-                              current.map((item) =>
-                                item.notification_id ===
-                                notification.notification_id
-                                  ? {
-                                      ...item,
-                                      status: "READ",
-                                    }
-                                  : item,
-                              ),
-                            );
-                          } catch (error) {
-                            console.error(
-                              "Failed to mark notification as read:",
-                              error,
-                            );
-                          }
-                        }}
-                      >
-                        Mark as Read
-                      </button>
-                    )}
-
-                    {notification.registration_link && (
+                  <div className="notice-actions">
+                    {notice.registration_link && (
                       <button
                         onClick={() =>
                           window.open(
-                            notification.registration_link,
+                            notice.registration_link,
                             "_blank",
                             "noopener,noreferrer",
                           )

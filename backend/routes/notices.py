@@ -345,6 +345,70 @@ def get_notifications(
 
 
 # ============================================================
+# STUDENT ALL NOTICES
+# ============================================================
+
+
+@router.get("/api/student/{student_id}/notices")
+def get_student_all_notices(
+    student_id: str,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_student),
+):
+    if current_user.get("uid") != student_id:
+        raise HTTPException(
+            status_code=403,
+            detail="You can only access your own notices.",
+        )
+
+    notices = db.query(Notice).order_by(Notice.created_at.desc()).all()
+
+    student_notifications = {
+        notification.notice_id: notification
+        for notification in (
+            db.query(Notification).filter(Notification.student_id == student_id).all()
+        )
+    }
+
+    result = []
+
+    for notice in notices:
+        notification = student_notifications.get(notice.id)
+
+        result.append(
+            {
+                "notice_id": notice.id,
+                "title": notice.title,
+                "summary": notice.summary,
+                "pdf_url": notice.pdf_url,
+                "category": notice.category,
+                "is_mandatory": notice.is_mandatory,
+                "eligibility": notice.eligibility,
+                "deadline": notice.deadline,
+                "registration_link": notice.registration_link,
+                "required_action": notice.required_action,
+                "importance": notice.importance,
+                # Present when this notice is relevant to the student
+                "priority": (notification.priority if notification else None),
+                "urgency": (notification.urgency if notification else None),
+                "days_left": (notification.days_left if notification else None),
+                "relevance_score": (
+                    notification.relevance_score if notification else None
+                ),
+                "reason": (notification.reason if notification else None),
+                "status": (notification.status if notification else "NOT_RELEVANT"),
+                "created_at": notice.created_at,
+            }
+        )
+
+    return {
+        "student_id": student_id,
+        "total": len(result),
+        "notices": result,
+    }
+
+
+# ============================================================
 # MARK NOTIFICATION READ
 # ============================================================
 

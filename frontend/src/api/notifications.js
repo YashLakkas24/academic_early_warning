@@ -161,3 +161,25 @@ export async function uploadTextNotice(text) {
 
   return response.json();
 }
+
+// ============================================================
+// GET ALL NOTICES — STUDENT
+// ============================================================
+
+export async function getAllStudentNotices(studentId) {
+  const cleanId = (studentId || "").trim().toUpperCase();
+
+  const response = await fetch(
+    `${API_BASE}/api/student/${encodeURIComponent(cleanId)}/notices`,
+    {
+      headers: await getAuthHeaders(),
+    },
+  );
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Failed to fetch all notices: ${error}`);
+  }
+
+  return response.json();
+}
