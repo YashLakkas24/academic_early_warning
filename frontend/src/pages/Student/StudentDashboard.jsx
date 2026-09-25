@@ -20,6 +20,7 @@ import {
   Award,
   ChevronRight,
   CheckCircle2,
+  SlidersHorizontal,
 } from "lucide-react";
 
 import "./StudentDashboard.css";
@@ -117,6 +118,11 @@ function StudentDashboard() {
       highlight: true,
     },
     {
+      id: "preferences",
+      label: "Preferences",
+      icon: SlidersHorizontal,
+    },
+    {
       id: "skills",
       label: "Skill Gaps",
       icon: Puzzle,
@@ -156,6 +162,11 @@ function StudentDashboard() {
                 onClick={() => {
                   if (item.id === "interest") {
                     navigate("/student/interest");
+                    return;
+                  }
+                  
+                  if (item.id === "preferences") {
+                    navigate("/student/preferences");
                     return;
                   }
 

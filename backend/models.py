@@ -56,12 +56,15 @@ class Student(Base):
 
     extracurricular_count = Column(Integer, nullable=False)
 
-    # Notice System / student profile
+    # Student profile
     year = Column(Integer, nullable=True)
     branch = Column(String, nullable=True)
 
+    # Explicit notice personalization preferences.
+    # These are independent from the Interest+ system.
     preferences = Column(Text, nullable=False, default="")
 
+    # Embedding generated exclusively from notice preferences.
     preference_embedding = Column(JSON, nullable=True)
 
     interests = Column(JSON, nullable=False, default=list)

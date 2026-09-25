@@ -4,7 +4,6 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from services.embedding_service import create_preference_embedding
 from database import SessionLocal
 
 from models import (
@@ -24,7 +23,6 @@ from ai_student.career_pivot.pipeline import (
     discover_career_directions,
     analyze_selected_direction,
 )
-from services.notification_service import refresh_student_notifications
 
 router = APIRouter(prefix="/api/students", tags=["Interest+"])
 
@@ -147,8 +145,6 @@ def add_interest(
     )
 
     if existing_interest:
-        refresh_notice_profile(student, db)
-
         return {
             "message": "Interest already exists",
             "student_id": student_id,
@@ -157,14 +153,14 @@ def add_interest(
         }
 
     new_interest = StudentInterest(
-        student_id=student_id, interest=interest_data.interest, status="active"
+        student_id=student_id,
+        interest=interest_data.interest,
+        status="active",
     )
 
     db.add(new_interest)
     db.commit()
     db.refresh(new_interest)
-
-    refresh_notice_profile(student, db)
 
     return {
         "message": "Interest saved successfully",
@@ -902,69 +898,3 @@ def trigger_career_pivot_analysis(
         current_user=current_user,
     )
 
-
-def refresh_notice_profile(student: Student, db: Session):
-    interests = (
-        db.query(StudentInterest)
-        .filter(
-            StudentInterest.student_id == student.student_id,
-            StudentInterest.status == "active",
-        )
-        .all()
-    )
-
-    preference_text = ", ".join(
-        interest.interest.strip()
-        for interest in interests
-        if interest.interest and interest.interest.strip()
-    )
-
-    # Update student's notice personalization profile
-    student.preferences = preference_text
-
-    # --------------------------------------------------------
-    # No active interests
-    # --------------------------------------------------------
-
-    if not preference_text:
-        student.preference_embedding = None
-
-        db.commit()
-        db.refresh(student)
-
-        # Re-evaluate existing notifications because the
-        # student's personalization profile has changed.
-        refresh_student_notifications(
-            student=student,
-            db=db,
-        )
-
-        return
-
-    # --------------------------------------------------------
-    # Generate new preference embedding
-    # --------------------------------------------------------
-
-    try:
-        student.preference_embedding = create_preference_embedding(preference_text)
-
-    except Exception as e:
-        print(f"Notice profile embedding failed for " f"{student.student_id}: {e}")
-
-        student.preference_embedding = None
-
-    # --------------------------------------------------------
-    # Save updated profile
-    # --------------------------------------------------------
-
-    db.commit()
-    db.refresh(student)
-
-    # --------------------------------------------------------
-    # Re-evaluate existing notices
-    # --------------------------------------------------------
-
-    refresh_student_notifications(
-        student=student,
-        db=db,
-    )

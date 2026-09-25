@@ -22,7 +22,6 @@ async function getAuthHeaders(includeJson = false) {
   return headers;
 }
 
-
 // const STUDENT_DATABASE = {
 //   STU001: { student_id: "STU001", name: "Aarav Sharma", roll_number: "01", attendance: 92, previous_sem_cgpa: 8.4, extracurricular_count: 3 },
 //   STU002: { student_id: "STU002", name: "Riya Patil", roll_number: "02", attendance: 61, previous_sem_cgpa: 6.1, extracurricular_count: 1 },
@@ -52,7 +51,7 @@ export async function getStudentProfile(studentId) {
       {
         method: "GET",
         headers: await getAuthHeaders(),
-      }
+      },
     );
 
     if (response.ok) {
@@ -65,7 +64,7 @@ export async function getStudentProfile(studentId) {
       const errorText = await response.text();
 
       throw new Error(
-        `Authentication failed (${response.status}): ${errorText}`
+        `Authentication failed (${response.status}): ${errorText}`,
       );
     }
 
@@ -73,9 +72,8 @@ export async function getStudentProfile(studentId) {
     const errorText = await response.text();
 
     throw new Error(
-      `Failed to fetch student profile (${response.status}): ${errorText}`
+      `Failed to fetch student profile (${response.status}): ${errorText}`,
     );
-
   } catch (err) {
     // Authentication errors must NOT fall back to fake/local data
     if (
@@ -98,10 +96,13 @@ export async function getStudentInterestStatus(studentId) {
   if (!cleanId) return { completed: false, interests: [] };
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/students/${encodeURIComponent(cleanId)}/interests/status`, {
-      method: "GET",
-      headers: await getAuthHeaders(),
-    });
+    const response = await fetch(
+      `${API_BASE_URL}/api/students/${encodeURIComponent(cleanId)}/interests/status`,
+      {
+        method: "GET",
+        headers: await getAuthHeaders(),
+      },
+    );
 
     if (response.ok) {
       return await response.json();
@@ -153,11 +154,14 @@ export async function saveStudentInterest(studentId, interest) {
   const cleanId = (studentId || "").trim().toUpperCase();
   if (!cleanId) throw new Error("Student ID is required.");
 
-  const response = await fetch(`${API_BASE_URL}/api/students/${encodeURIComponent(cleanId)}/interests`, {
-    method: "POST",
-    headers: await getAuthHeaders(true),
-    body: JSON.stringify({ interest }),
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/api/students/${encodeURIComponent(cleanId)}/interests`,
+    {
+      method: "POST",
+      headers: await getAuthHeaders(true),
+      body: JSON.stringify({ interest }),
+    },
+  );
 
   if (!response.ok) {
     const errText = await response.text();
@@ -167,6 +171,66 @@ export async function saveStudentInterest(studentId, interest) {
   return await response.json();
 }
 
+/**
+ * Fetch student's notice personalization preferences.
+ */
+export async function getStudentPreferences(studentId) {
+  const cleanId = (studentId || "").trim().toUpperCase();
+
+  if (!cleanId) {
+    throw new Error("Student ID is required.");
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/students/${encodeURIComponent(cleanId)}/preferences`,
+    {
+      method: "GET",
+      headers: await getAuthHeaders(),
+    },
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+
+    throw new Error(
+      `Failed to fetch preferences (${response.status}): ${errorText}`,
+    );
+  }
+
+  return await response.json();
+}
+
+/**
+ * Update student's notice personalization preferences.
+ */
+export async function updateStudentPreferences(studentId, preferences) {
+  const cleanId = (studentId || "").trim().toUpperCase();
+
+  if (!cleanId) {
+    throw new Error("Student ID is required.");
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/students/${encodeURIComponent(cleanId)}/preferences`,
+    {
+      method: "PUT",
+      headers: await getAuthHeaders(true),
+      body: JSON.stringify({
+        preferences,
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+
+    throw new Error(
+      `Failed to update preferences (${response.status}): ${errorText}`,
+    );
+  }
+
+  return await response.json();
+}
 /**
  * Start or resume an Interest+ AI discovery session: POST /api/students/{student_id}/interest-session/start
  */
@@ -180,7 +244,7 @@ export async function startInterestSession(studentId, interest, reset = false) {
       method: "POST",
       headers: await getAuthHeaders(true),
       body: JSON.stringify({ interest }),
-    }
+    },
   );
 
   if (!response.ok) {
@@ -195,7 +259,10 @@ export async function startInterestSession(studentId, interest, reset = false) {
  * Submit answer to current question and receive next AI question or final analysis:
  * POST /api/students/{student_id}/interest-session/answer
  */
-export async function submitInterestAnswer(studentId, { interest, question_id, question, answer, question_order }) {
+export async function submitInterestAnswer(
+  studentId,
+  { interest, question_id, question, answer, question_order },
+) {
   const cleanId = (studentId || "").trim().toUpperCase();
   if (!cleanId) throw new Error("Student ID is required.");
 
@@ -211,7 +278,7 @@ export async function submitInterestAnswer(studentId, { interest, question_id, q
         answer,
         question_order,
       }),
-    }
+    },
   );
 
   if (!response.ok) {
@@ -238,14 +305,14 @@ export async function getStudentInterestAnalysis(studentId) {
     {
       method: "GET",
       headers: await getAuthHeaders(),
-    }
+    },
   );
 
   if (!response.ok) {
     const errorText = await response.text();
 
     throw new Error(
-      `Failed to fetch interest analysis (${response.status}): ${errorText}`
+      `Failed to fetch interest analysis (${response.status}): ${errorText}`,
     );
   }
 
@@ -265,12 +332,14 @@ export async function getStudentCareerDirections(studentId) {
     {
       method: "GET",
       headers: await getAuthHeaders(),
-    }
+    },
   );
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Failed to fetch career directions (${response.status}): ${errorText}`);
+    throw new Error(
+      `Failed to fetch career directions (${response.status}): ${errorText}`,
+    );
   }
 
   return await response.json();
@@ -280,7 +349,11 @@ export async function getStudentCareerDirections(studentId) {
  * Fetch Skill Gap Analysis for the student:
  * GET /api/students/{student_id}/skill-gap
  */
-export async function getStudentSkillGap(studentId, direction = null, forceRefresh = false) {
+export async function getStudentSkillGap(
+  studentId,
+  direction = null,
+  forceRefresh = false,
+) {
   const cleanId = (studentId || "").trim().toUpperCase();
   if (!cleanId) throw new Error("Student ID is required.");
 
@@ -288,8 +361,9 @@ export async function getStudentSkillGap(studentId, direction = null, forceRefre
   if (direction) queryParams.append("direction", direction);
   if (forceRefresh) queryParams.append("force_refresh", "true");
 
-  const url = `${API_BASE_URL}/api/students/${encodeURIComponent(cleanId)}/skill-gap${queryParams.toString() ? `?${queryParams.toString()}` : ""
-    }`;
+  const url = `${API_BASE_URL}/api/students/${encodeURIComponent(cleanId)}/skill-gap${
+    queryParams.toString() ? `?${queryParams.toString()}` : ""
+  }`;
 
   const response = await fetch(url, {
     method: "GET",
@@ -298,7 +372,9 @@ export async function getStudentSkillGap(studentId, direction = null, forceRefre
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Failed to fetch skill gap analysis (${response.status}): ${errorText}`);
+    throw new Error(
+      `Failed to fetch skill gap analysis (${response.status}): ${errorText}`,
+    );
   }
 
   return await response.json();
@@ -308,7 +384,11 @@ export async function getStudentSkillGap(studentId, direction = null, forceRefre
  * Fetch personalized AI Roadmap for the student:
  * GET /api/students/{student_id}/roadmap
  */
-export async function getStudentRoadmap(studentId, direction = null, forceRefresh = false) {
+export async function getStudentRoadmap(
+  studentId,
+  direction = null,
+  forceRefresh = false,
+) {
   const cleanId = (studentId || "").trim().toUpperCase();
   if (!cleanId) throw new Error("Student ID is required.");
 
@@ -316,8 +396,9 @@ export async function getStudentRoadmap(studentId, direction = null, forceRefres
   if (direction) queryParams.append("direction", direction);
   if (forceRefresh) queryParams.append("force_refresh", "true");
 
-  const url = `${API_BASE_URL}/api/students/${encodeURIComponent(cleanId)}/roadmap${queryParams.toString() ? `?${queryParams.toString()}` : ""
-    }`;
+  const url = `${API_BASE_URL}/api/students/${encodeURIComponent(cleanId)}/roadmap${
+    queryParams.toString() ? `?${queryParams.toString()}` : ""
+  }`;
 
   const response = await fetch(url, {
     method: "GET",
@@ -326,7 +407,9 @@ export async function getStudentRoadmap(studentId, direction = null, forceRefres
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Failed to fetch student roadmap (${response.status}): ${errorText}`);
+    throw new Error(
+      `Failed to fetch student roadmap (${response.status}): ${errorText}`,
+    );
   }
 
   return await response.json();
@@ -336,7 +419,11 @@ export async function getStudentRoadmap(studentId, direction = null, forceRefres
  * Trigger explicit Career Pivot analysis for a specific direction:
  * POST /api/students/{student_id}/career-pivot/analyze
  */
-export async function analyzeCareerDirection(studentId, direction, forceRefresh = true) {
+export async function analyzeCareerDirection(
+  studentId,
+  direction,
+  forceRefresh = true,
+) {
   const cleanId = (studentId || "").trim().toUpperCase();
   if (!cleanId) throw new Error("Student ID is required.");
 
@@ -349,12 +436,14 @@ export async function analyzeCareerDirection(studentId, direction, forceRefresh 
         direction,
         force_refresh: forceRefresh,
       }),
-    }
+    },
   );
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Failed to analyze career direction (${response.status}): ${errorText}`);
+    throw new Error(
+      `Failed to analyze career direction (${response.status}): ${errorText}`,
+    );
   }
 
   return await response.json();

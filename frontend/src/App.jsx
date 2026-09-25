@@ -16,6 +16,7 @@ import StudentRoadmap from "./pages/Student/StudentRoadmap";
 
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
 import NoticeUpload from "./pages/teachers-dash/NoticeUpload";
+import StudentPreferences from "./pages/Student/StudentPreferences";
 
 function App() {
   return (
@@ -50,7 +51,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        
+
         <Route
           path="/teacher/notices"
           element={
@@ -126,6 +127,15 @@ function App() {
           }
         />
       </Routes>
+
+      <Route
+        path="/student/preferences"
+        element={
+          <ProtectedRoute allowedRole="student">
+            <StudentPreferences />
+          </ProtectedRoute>
+        }
+      />
     </BrowserRouter>
   );
 }
