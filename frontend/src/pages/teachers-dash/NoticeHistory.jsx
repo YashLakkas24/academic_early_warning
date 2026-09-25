@@ -15,6 +15,8 @@ import { getAllNotices } from "../../api/notifications";
 
 import "./NoticeHistory.css";
 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
 export default function NoticeHistory() {
   const navigate = useNavigate();
 
@@ -201,13 +203,19 @@ export default function NoticeHistory() {
 
                       {notice.pdf_url && (
                         <button
-                          onClick={() =>
+                          onClick={() => {
+                            const documentUrl = notice.pdf_url.startsWith(
+                              "http",
+                            )
+                              ? notice.pdf_url
+                              : `${API_BASE}${notice.pdf_url}`;
+
                             window.open(
-                              notice.pdf_url,
+                              documentUrl,
                               "_blank",
                               "noopener,noreferrer",
-                            )
-                          }
+                            );
+                          }}
                         >
                           View Document
                           <ExternalLink size={15} />

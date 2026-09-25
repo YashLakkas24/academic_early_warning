@@ -34,9 +34,11 @@ from routes.teacher import router as teacher_router
 from routes.student import router as student_router
 from routes.interest import router as interest_router
 from routes.interest_options import router as interest_options_router
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
 os.makedirs("uploads/notices", exist_ok=True)
+
 
 app.mount(
     "/uploads",
